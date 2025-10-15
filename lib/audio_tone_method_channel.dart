@@ -86,4 +86,18 @@ class MethodChannelAudioTone extends AudioTonePlatform {
     );
     return result ?? 99;
   }
+
+  /// 播放
+  /// Play
+  @override
+  Future<void> play() async {
+    await methodChannel.invokeMethod<void>('play');
+  }
+
+  /// 停止
+  /// Stop
+  @override
+  Future<void> stop() async {
+    await methodChannel.invokeMethod<void>('stop');
+  }
 }

@@ -52,6 +52,12 @@ public class AudioTonePlugin: NSObject, FlutterPlugin {
     case "playMorseCode":
       let morseCode = call.arguments as! String
       result(audioTonePlayer?.playMorseCode(for: morseCode))
+    case "play":
+      audioTonePlayer?.playNow()
+      result(nil)
+    case "stop":
+      audioTonePlayer?.playStop()
+      result(nil)
     default:
       result(FlutterMethodNotImplemented)
     }

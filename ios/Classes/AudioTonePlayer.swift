@@ -23,7 +23,9 @@ class AudioTonePlayer: NSObject {
     // 音频引擎组件
     private let audioEngine = AVAudioEngine()
     private let playerNode = AVAudioPlayerNode()
+    private let tapPlayerNode = AVAudioPlayerNode()
     private var isPlaying = false
+    private var isTapPlaying = false // 专门跟踪 tapPlayerNode 的播放状态
     
     // MARK: - 音频基础设置
 
@@ -78,13 +80,17 @@ class AudioTonePlayer: NSObject {
         self.dotDashDuration = Double(self.dotDashInterval_DotTimes) * self.dotDuration
         self.oneWhiteSpaceDuration = Double(self.oneWhiteSpace_DotTimes) * self.dotDuration
         self.twoWhiteSpacesDuration = Double(self.twoWhiteSpaces_DotTimes) * self.dotDuration
+        
+        // 为 tapPlayerNode 安排持续的音频缓冲区
+        let continuousTone = generateTone(duration: 1) // 1秒的长音，循环播放
+        tapPlayerNode.scheduleBuffer(continuousTone, at: nil, options: .loops, completionHandler: nil)
     }
     
     // MARK: - 生命周期方法 初始化和销毁
     init(sampleRate: Double) {
         super.init()
-        setupAudioSession()
         self.sampleRate = sampleRate
+        setupAudioSession()
         setupAudioEngine()
     }
 
@@ -109,19 +115,24 @@ class AudioTonePlayer: NSObject {
     private func setupAudioEngine() {
         let mainMixer = audioEngine.mainMixerNode
         audioEngine.attach(playerNode)
+        audioEngine.attach(tapPlayerNode)
         
         guard let audioFormat = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else {
             fatalError("无法创建音频格式")
         }
         
         audioEngine.connect(playerNode, to: mainMixer, format: audioFormat)
+        audioEngine.connect(tapPlayerNode, to: mainMixer, format: audioFormat)
         
         print("音频引擎配置完成")
     }
     
     // 结束
     deinit {
-        stop()
+        stopMorseCode() // 停止播放摩斯码
+        playStop() // 停止按键播放
+        tapPlayerNode.stop()
+        tapPlayerNode.reset()
         print("AudioTonePlayer 已释放")
     }
     
@@ -132,6 +143,12 @@ class AudioTonePlayer: NSObject {
         guard !isPlaying else {
             print("正在播放中，请等待完成")
             return 1
+        }
+        
+        // 如果 tapPlayerNode 正在播放，先停止它
+        if isTapPlaying {
+            tapPlayerNode.pause()
+            isTapPlaying = false
         }
         
         guard !morseCode.isEmpty else {
@@ -205,7 +222,7 @@ class AudioTonePlayer: NSObject {
             
             // 延迟停止，确保最后声音播放完毕
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                self?.stop()
+                self?.stopMorseCode()
             }
             return
         }
@@ -271,12 +288,17 @@ class AudioTonePlayer: NSObject {
     }
     
     // 停止播放
-    func stop() {
-        print("停止播放")
+    func stopMorseCode() {
         isPlaying = false
+        isTapPlaying = false
         
         if playerNode.isPlaying {
             playerNode.stop()
+        }
+        
+        if tapPlayerNode.isPlaying {
+            tapPlayerNode.stop()
+            tapPlayerNode.reset()
         }
         
         if audioEngine.isRunning {
@@ -292,10 +314,89 @@ class AudioTonePlayer: NSObject {
             print("取消音频会话激活失败: \(error.localizedDescription)")
         }
     }
+
+    // 打印当前时间（精确到纳秒）
+    func displayTime(_ title: String) {
+        // 打印当前时间（精确到纳秒）
+        let now = CACurrentMediaTime()
+        print("\(title) \(now)")
+    }
     
     // 播放完成通知
     func playFinishedNotify() {
+        self.isPlaying = false
+    }
+    
+    // 检查音频是否真的在播放
+    func isActuallyPlaying() -> Bool {
+        return tapPlayerNode.isPlaying && audioEngine.isRunning
+    }
+
+    // MARK: - 声音播放控制
+
+    // 播放
+    func playNow() {
+        displayTime("开始播放1")
         
+        // 如果已经在播放，先停止之前的
+        if isTapPlaying {
+            tapPlayerNode.pause()
+//            tapPlayerNode.reset()
+            // 给音频系统一点时间来处理停止操作
+            Thread.sleep(forTimeInterval: 0.05)
+        }
+        
+        isTapPlaying = true
+        
+        // 确保音频引擎正在运行
+        do {
+            if !audioEngine.isRunning {
+                try audioEngine.start()
+                print("音频引擎启动成功")
+                // 音频引擎启动后需要一点时间来稳定
+                Thread.sleep(forTimeInterval: 0.1)
+            }
+        } catch {
+            print("音频引擎启动失败: \(error.localizedDescription)")
+            isTapPlaying = false
+            return
+        }
+        
+        displayTime("真正播放6")
+        // 开始一直播放，直到调用stop()
+        tapPlayerNode.play()
+        displayTime("真正播放7")
+        // 等待音频真正开始播放
+        while !tapPlayerNode.isPlaying {
+        }
+        
+        if tapPlayerNode.isPlaying {
+            displayTime("真正播放8")
+        } else {
+            print("警告：音频可能未能正常开始播放")
+        }
+
+        displayTime("开始播放9")
+    }
+
+    func playStop() {
+        // 打印当前时间（精确到纳秒）
+        displayTime("停止播放1")
+        
+        // 停止播放节点
+        if tapPlayerNode.isPlaying {
+            tapPlayerNode.pause()
+            // 延迟重置，确保停止操作完成
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+//                self?.tapPlayerNode.reset()
+//            }
+        }
+        
+        // 给音频系统一点时间来处理停止操作
+        Thread.sleep(forTimeInterval: 0.05)
+        
+        displayTime("停止播放2")
+        print("============")
     }
 
     // MARK: - 增加音频流

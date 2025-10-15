@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -16,37 +18,11 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
-  final _audioTonePlugin = AudioTone();
-  AudioTone? audioTone;
+  var audioTone = AudioTone(wpm: 5);
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
-  }
-
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
-    try {
-      platformVersion =
-          await _audioTonePlugin.getPlatformVersion() ??
-          'Unknown platform version';
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion;
-    });
   }
 
   @override
@@ -56,16 +32,21 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(title: const Text('Plugin example app')),
         body: ListView(
           children: [
-            ListTile(title: Text('Running on: $_platformVersion\n')),
             ListTile(
               title: const Text('Init Tone Player'),
               onTap: () async {
-                if (audioTone != null) {
-                  //TODO: 这里要dispose一下
-                  audioTone = null;
-                }
-                audioTone ??= AudioTone();
-                audioTone!.playMorseCode(".--. .-");
+                audioTone.playMorseCode(".--. .-");
+              },
+            ),
+            InkWell(
+              child: ListTile(title: const Text('Tap to Play')),
+              onTapDown: (details) {
+                log("S ${DateTime.now()}");
+                audioTone.play();
+              },
+              onTapUp: (details) {
+                log("E ${DateTime.now()}");
+                audioTone.stop();
               },
             ),
           ],

@@ -185,4 +185,16 @@ class AudioTone {
   Future<void> playMorseCode(String morseCode) async {
     await AudioTonePlatform.instance.playMorseCode(morseCode);
   }
+
+  /// 播放
+  /// Play
+  Future<void> play() async {
+    await AudioTonePlatform.instance.play();
+  }
+
+  /// 停止
+  /// Stop
+  Future<void> stop() async {
+    await AudioTonePlatform.instance.stop();
+  }
 }

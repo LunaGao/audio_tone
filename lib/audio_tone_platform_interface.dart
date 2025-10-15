@@ -80,4 +80,16 @@ abstract class AudioTonePlatform extends PlatformInterface {
   Future<int> playMorseCode(String morseCode) {
     throw UnimplementedError('playMorseCode() has not been implemented.');
   }
+
+  /// 播放
+  /// Play
+  Future<void> play() {
+    throw UnimplementedError('play() has not been implemented.');
+  }
+
+  /// 停止
+  /// Stop
+  Future<void> stop() {
+    throw UnimplementedError('stop() has not been implemented.');
+  }
 }
