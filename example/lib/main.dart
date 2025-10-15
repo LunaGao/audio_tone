@@ -18,7 +18,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
   final _audioTonePlugin = AudioTone();
-  AudioTone? audioTonePlayer;
+  AudioTone? audioTone;
 
   @override
   void initState() {
@@ -60,11 +60,12 @@ class _MyAppState extends State<MyApp> {
             ListTile(
               title: const Text('Init Tone Player'),
               onTap: () async {
-                if (audioTonePlayer != null) {
+                if (audioTone != null) {
                   //TODO: 这里要dispose一下
-                  audioTonePlayer = null;
+                  audioTone = null;
                 }
-                audioTonePlayer ??= AudioTone();
+                audioTone ??= AudioTone();
+                audioTone!.playMorseCode(".--. .-");
               },
             ),
           ],

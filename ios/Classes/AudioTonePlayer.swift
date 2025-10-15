@@ -1,18 +1,6 @@
 import AVFoundation
 
 class AudioTonePlayer: NSObject {
-//    // 摩斯码字典
-//    private let morseCodeDictionary: [Character: String] = [
-//        "A": ".-", "B": "-...", "C": "-.-.", "D": "-..", "E": ".",
-//        "F": "..-.", "G": "--.", "H": "....", "I": "..", "J": ".---",
-//        "K": "-.-", "L": ".-..", "M": "--", "N": "-.", "O": "---",
-//        "P": ".--.", "Q": "--.-", "R": ".-.", "S": "...", "T": "-",
-//        "U": "..-", "V": "...-", "W": ".--", "X": "-..-", "Y": "-.--",
-//        "Z": "--..", "0": "-----", "1": ".----", "2": "..---", "3": "...--",
-//        "4": "....-", "5": ".....", "6": "-....", "7": "--...", "8": "---..",
-//        "9": "----.", " ": "/"
-//    ]
-    
     // 音频配置
     private var sampleRate: Double = 44100 // 音频采样率，Hz
     private var frequency: Double = 800 // 蜂鸣频率，Hz
@@ -46,7 +34,8 @@ class AudioTonePlayer: NSObject {
 
     // 设置速度（每分钟单词数），主要设置的是点的时长，其他的都是根据点的时长计算出来的。
     func setSpeed(_ wpm: Int) {
-        self.dotDuration = Double((60 / wpm) / 50 )
+        let _wpm = (60.0 / Double(wpm)) / 50.0
+        self.dotDuration = _wpm
         upgradeDuration()
     }
     
@@ -136,25 +125,6 @@ class AudioTonePlayer: NSObject {
         print("AudioTonePlayer 已释放")
     }
     
-    // MARK: - 不需要了
-    // 将文本转换为摩斯码
-//    private func textToMorseCode(_ text: String) -> String {
-//        let uppercaseText = text.uppercased()
-//        var morseCode = [String]()
-//        
-//        for char in uppercaseText {
-//            if let code = morseCodeDictionary[char] {
-//                morseCode.append(code)
-//            } else {
-//                print("警告: 字符 '\(char)' 没有对应的摩斯码")
-//            }
-//        }
-//        
-//        let result = morseCode.joined(separator: " ")
-//        print("转换的摩斯码: \(result)")
-//        return result
-//    }
- 
     // MARK: - 播放/停止 摩斯码
     
     // 播放摩斯码，只接受".", "-", " "，这三种数据。
@@ -191,9 +161,7 @@ class AudioTonePlayer: NSObject {
         }
         
         // 播放处理后的序列内容
-        playSymbols(symbols)
-        // 播放音频
-        playerNode.play()
+        playSymbols(symbols, index: 0)
         return 0
     }
 
@@ -227,103 +195,80 @@ class AudioTonePlayer: NSObject {
         
         return processed.components(separatedBy: "")
     }
-
-    // 循环播放符号序列
-    private func playSymbols(_ symbols: [String]) {
-        // 循环每一个符号
-        for symbol in symbols {
-            if symbol == "." {
-                // 播放一个点
-                playDot()
+    
+    // 递归播放符号序列
+    private func playSymbols(_ symbols: [String], index: Int) {
+        guard index < symbols.count, isPlaying else {
+            // 所有符号播放完毕
+            print("播放完成")
+            isPlaying = false
+            
+            // 延迟停止，确保最后声音播放完毕
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                self?.stop()
             }
-            if symbol == "-" {
-                // 播放一个划
-                playDash()
-            }
-            if symbol == "i" {
-                // 播放一个点和划之间的间隔
-                playDotDashInterval()
-            }
-            if symbol == "o" {
-                // 播放一个字母之间的间隔
-                playLetterGap()
-            }
-            if symbol == "t" {
-                // 播放一个单词之间的间隔
-                playWordsInterval()
-            }
+            return
+        }
+        
+        let symbol = symbols[index]
+        print("播放符号 \(index + 1)/\(symbols.count): '\(symbol)'")
+        
+        // 播放当前符号的所有点和划
+        playSymbolCharacters(Array(symbol), index: 0) { [weak self] in
+            self?.playFinishedNotify()
+            print("play finished")
         }
     }
     
-    // 递归播放符号序列
-    // private func playSymbols(_ symbols: [String], index: Int) {
-    //     guard index < symbols.count, isPlaying else {
-    //         // 所有符号播放完毕
-    //         print("播放完成")
-    //         isPlaying = false
-            
-    //         // 延迟停止，确保最后声音播放完毕
-    //         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-    //             self?.stop()
-    //         }
-    //         return
-    //     }
-        
-    //     let symbol = symbols[index]
-    //     print("播放符号 \(index + 1)/\(symbols.count): '\(symbol)'")
-        
-    //     // 播放当前符号的所有点和划
-    //     playSymbolCharacters(Array(symbol), index: 0) { [weak self] in
-    //         guard let self = self else { return }
-            
-    //         // 符号之间的间隔
-    //         let gap = index < symbols.count - 1 ? self.letterGap : 0
-    //         print("符号间隔: \(gap)秒")
-    //         let silence = self.generateSilence(duration: gap)
-            
-    //         self.playerNode.scheduleBuffer(silence) {
-    //             self.playSymbols(symbols, index: index + 1)
-    //         }
-    //     }
-    // }
-    
     // 递归播放单个符号的点和划
-    // private func playSymbolCharacters(_ characters: [Character], index: Int, completion: @escaping () -> Void) {
-    //     guard index < characters.count, isPlaying else {
-    //         completion()
-    //         return
-    //     }
+    private func playSymbolCharacters(_ characters: [Character], index: Int, completion: @escaping () -> Void) {
+        guard index < characters.count, isPlaying else {
+            completion()
+            return
+        }
         
-    //     let char = characters[index]
-    //     let isLast = index == characters.count - 1
+        let char = characters[index]
+//        let isLast = index == characters.count - 1
+
+        var duration = Double(0);
+        if char == "." {
+            // 播放一个点
+            duration = self.dotDuration
+        } else if char == "-" {
+            // 播放一个划
+            duration = self.dashDuration
+        } else if char == "i" {
+            // 播放一个点和划之间的间隔
+            duration = self.dotDashDuration
+        } else if char == "o" {
+            // 播放一个字母之间的间隔
+            duration = self.oneWhiteSpaceDuration
+        } else if char == "t" {
+            // 播放一个单词之间的间隔
+            duration = self.twoWhiteSpacesDuration
+        }
         
-    //     // 确定是点还是划
-    //     let duration = char == "." ? dotDuration : dashDuration
-    //     let charType = char == "." ? "点" : "划"
-    //     print("播放\(charType): \(duration)秒")
-        
-    //     let tone = generateTone(duration: duration)
-        
-    //     playerNode.scheduleBuffer(tone) { [weak self] in
-    //         guard let self = self else { return }
-            
-    //         // 如果不是最后一个字符，添加符号间间隔
-    //         if !isLast {
-    //             let silence = self.generateSilence(duration: self.symbolGap)
-    //             self.playerNode.scheduleBuffer(silence) {
-    //                 self.playSymbolCharacters(characters, index: index + 1, completion: completion)
-    //             }
-    //         } else {
-    //             self.playSymbolCharacters(characters, index: index + 1, completion: completion)
-    //         }
-    //     }
-        
-    //     // 如果是第一个字符，需要启动播放
-    //     if index == 0 {
-    //         print("开始播放节点")
-    //         playerNode.play()
-    //     }
-    // }
+        // 确定是点划，播放声音
+        if (char == ".") || (char == "-") {
+            // 播放一个点或划
+            let tone = generateTone(duration: duration)
+            playerNode.scheduleBuffer(tone) {
+                self.playSymbolCharacters(characters, index: index + 1, completion: completion)
+            }
+        } else {
+            // 其他则静音
+            let silence = generateSilence(duration: duration)
+            playerNode.scheduleBuffer(silence) {
+                self.playSymbolCharacters(characters, index: index + 1, completion: completion)
+            }
+        }
+
+        // 如果是第一个字符，需要启动播放
+        if index == 0 {
+            print("开始播放节点")
+            playerNode.play()
+        }
+    }
     
     // 停止播放
     func stop() {
@@ -346,6 +291,11 @@ class AudioTonePlayer: NSObject {
         } catch {
             print("取消音频会话激活失败: \(error.localizedDescription)")
         }
+    }
+    
+    // 播放完成通知
+    func playFinishedNotify() {
+        
     }
 
     // MARK: - 增加音频流

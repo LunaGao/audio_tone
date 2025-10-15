@@ -177,4 +177,12 @@ class AudioTone {
     _volume = volume;
     AudioTonePlatform.instance.setVolume(volume);
   }
+
+  /// 播放摩尔斯电码
+  /// Play Morse Code
+  ///
+  /// [morseCode] Morse Code / 摩尔斯电码
+  Future<void> playMorseCode(String morseCode) async {
+    await AudioTonePlatform.instance.playMorseCode(morseCode);
+  }
 }
