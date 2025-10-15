@@ -18,6 +18,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
   final _audioTonePlugin = AudioTone();
+  AudioTone? audioTonePlayer;
 
   @override
   void initState() {
@@ -32,7 +33,8 @@ class _MyAppState extends State<MyApp> {
     // We also handle the message potentially returning null.
     try {
       platformVersion =
-          await _audioTonePlugin.getPlatformVersion() ?? 'Unknown platform version';
+          await _audioTonePlugin.getPlatformVersion() ??
+          'Unknown platform version';
     } on PlatformException {
       platformVersion = 'Failed to get platform version.';
     }
@@ -51,11 +53,21 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Plugin example app'),
-        ),
-        body: Center(
-          child: Text('Running on: $_platformVersion\n'),
+        appBar: AppBar(title: const Text('Plugin example app')),
+        body: ListView(
+          children: [
+            ListTile(title: Text('Running on: $_platformVersion\n')),
+            ListTile(
+              title: const Text('Init Tone Player'),
+              onTap: () async {
+                if (audioTonePlayer != null) {
+                  //TODO: 这里要dispose一下
+                  audioTonePlayer = null;
+                }
+                audioTonePlayer ??= AudioTone();
+              },
+            ),
+          ],
         ),
       ),
     );

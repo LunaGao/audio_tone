@@ -7,7 +7,6 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 class MockAudioTonePlatform
     with MockPlatformInterfaceMixin
     implements AudioTonePlatform {
-
   @override
   Future<String?> getPlatformVersion() => Future.value('42');
 }
@@ -25,5 +24,12 @@ void main() {
     AudioTonePlatform.instance = fakePlatform;
 
     expect(await audioTonePlugin.getPlatformVersion(), '42');
+  });
+
+  test('init', () async {
+    AudioTone audioTonePlugin = AudioTone(
+      sampleRate: AudioSampleRate.defaultSampleRate,
+      wpm: 100,
+    );
   });
 }

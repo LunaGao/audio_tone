@@ -1,5 +1,8 @@
 # audio_tone
 
+![Static Badge](https://img.shields.io/badge/bless-Cats-green)
+![Static Badge](https://img.shields.io/badge/AI-doubao-pink)
+
 A new Flutter plugin project.
 
 ## Getting Started
