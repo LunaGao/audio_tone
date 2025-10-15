@@ -14,25 +14,90 @@ class AudioTonePlayer: NSObject {
     ]
     
     // 音频配置
-    private let sampleRate: Double = 44100
-    private let frequency: Double = 800 // 蜂鸣频率，Hz
-    private let dotDuration: Double = 3 // 点的时长，秒
+    private var sampleRate: Double = 44100 // 音频采样率，Hz
+    private var frequency: Double = 800 // 蜂鸣频率，Hz
+    
+    // 点、划、点划之间、字母、单词之间的倍数关系
+    private var dash_DitTimes: Int = 3 // 划的时长，点的倍数
+    private var ditDashInterval_DitTimes: Int = 1 // 点划之间的时长，点的倍数
+    private var symbolInterval_DitTimes: Int = 3 // 字母之间的间隔，点的倍数
+    private var wordsInterval_DitTimes: Int = 7 // 单词之间的间隔，点的倍数
+    
+    // 点、划、点划之间、字母、单词之间的时长
+    private var dotDuration: Double = 0.12 // 点的时长，秒（基础时长），使用setSpeed设置
     private let dashDuration: Double = 6 // 划的时长，秒
     private let symbolGap: Double = 6 // 符号之间的间隔，秒
-    private let letterGap: Double = 6 // 字母之间的间隔，秒
-    private let wordGap: Double = 14 // 单词之间的间隔，秒
+    private let letterGap: Double = 3 // 字母之间的间隔，秒
+    private let wordGap: Double = 7 // 单词之间的间隔，秒
+    
+    private var volume: Float = 1.0 // 音量，0.0到1.0之间
     
     // 音频引擎组件
     private let audioEngine = AVAudioEngine()
     private let playerNode = AVAudioPlayerNode()
     private var isPlaying = false
     
-    override init() {
+    // MARK: - 初始化方法
+    
+    init(sampleRate: Double) {
         super.init()
         setupAudioSession()
+        self.sampleRate = sampleRate
         setupAudioEngine()
     }
     
+    // MARK: - 音频基础设置
+
+    // 设置频率
+    func setFrequency(_ frequency: Int) {
+        self.frequency = Double(frequency)
+    }
+
+    // 设置速度（每分钟单词数）
+    func setSpeed(_ wpm: Int) {
+        self.dotDuration = Double((60 / wpm) / 50 )
+        _upgradeDuration()
+    }
+    
+    // 设置音量
+    func setVolume(_ volume: Float) {
+        self.volume = volume
+        // 设置主混音器音量
+        let mainMixer = audioEngine.mainMixerNode
+        mainMixer.outputVolume = volume
+    }
+    
+    // MARK: - 时长设置 开始
+
+    // 设置划的时长（点的倍数）
+    func setDashDuration(_ ditTimes: Int) {
+        self.dash_DitTimes = ditTimes
+        _upgradeDuration()
+    }
+
+    // 设置点与划之间的间隔时长（点的倍数）
+    func setDotDashIntervalDuration(_ ditTimes: Int) {
+        self.ditDashInterval_DitTimes = ditTimes
+        _upgradeDuration()
+    }
+    
+    // 
+    func setSymbolIntervalDuration(_ ditTimes: Int) {
+        self.symbolInterval_DitTimes = ditTimes
+        _upgradeDuration()
+    }
+
+    // 设置单词间间隔时长（点的倍数）
+    func setWordsIntervalDuration(_ ditTimes: Int) {
+        self.wordsInterval_DitTimes = ditTimes
+    }
+    
+    func _upgradeDuration() {
+        
+    }
+    
+    // MARK: - 时长设置 结束
+
     // 配置音频会话 - 修复无声音的关键
     private func setupAudioSession() {
         do {
@@ -55,15 +120,11 @@ class AudioTonePlayer: NSObject {
         let mainMixer = audioEngine.mainMixerNode
         audioEngine.attach(playerNode)
         
-        // 修正：使用可选绑定处理AVAudioFormat?
         guard let audioFormat = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else {
             fatalError("无法创建音频格式")
         }
         
         audioEngine.connect(playerNode, to: mainMixer, format: audioFormat)
-        
-        // 设置主混音器音量
-        mainMixer.outputVolume = 1.0
         
         print("音频引擎配置完成")
     }

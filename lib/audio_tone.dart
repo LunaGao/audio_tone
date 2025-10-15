@@ -1,10 +1,9 @@
+import 'package:audio_tone/audio_frequency.dart';
 import 'package:audio_tone/audio_sample_rate.dart';
-import 'package:audio_tone/audio_waveform.dart';
 
 import 'audio_tone_platform_interface.dart';
 
 export 'audio_sample_rate.dart';
-export 'audio_waveform.dart';
 
 class AudioTone {
   Future<String?> getPlatformVersion() {
@@ -14,56 +13,64 @@ class AudioTone {
   // Audio Sample Rate （Frequency）/ 音频采样率
   // default 44100Hz / 默认44100Hz
   late AudioSampleRate _sampleRate;
+  AudioSampleRate get sampleRate => _sampleRate;
+
+  /// 音频频率 / Audio Frequency
+  /// default 800Hz / 默认800Hz
+  late AudioFrequency _frequency;
+  AudioFrequency get frequency => _frequency;
 
   /// Words per minute / 每分钟单词数
   /// default value 10 WPM, range 5-100 WPM / 默认10WPM，范围5-100WPM
   late int _wpm;
+  int get wpm => _wpm;
 
   /// Duration of a Dash (Dot counts) / 破折号持续时间（点的倍数）
   /// default value 3 dots, range 2-10 dots / 默认3个点，范围2-10个点
   late int _dashDuration;
+  int get dashDuration => _dashDuration;
 
   /// 点与破折号之间的间隔时长（点的倍数）
   /// default value 3 dots, range 1-5 dots / 默认3个点，范围1-5个点
   late int _dotDashIntervalDuration;
+  int get dotDashIntervalDuration => _dotDashIntervalDuration;
 
   /// 单词间间隔时长（点的倍数）
   /// default value 7 dots, range 3-20 dots / 默认7个点，范围3-20个点
   late int _wordsIntervalDuration;
+  int get wordsIntervalDuration => _wordsIntervalDuration;
 
   /// 音量 / Volume
   /// default value 1.0, range 0.0-1.0 / 默认1.0，范围0.0-1.0
   late double _volume;
-
-  /// 波形类型 / Waveform Type
-  /// default value sine / 默认正弦波
-  late WaveformType _waveformType;
+  double get volume => _volume;
 
   AudioTone({
     AudioSampleRate sampleRate = AudioSampleRate.defaultSampleRate,
+    AudioFrequency frequency = AudioFrequency.defaultFrequency,
     int wpm = 10,
     int dashDuration = 3,
     int dotDashIntervalDuration = 1,
     int wordsIntervalDuration = 7,
     double volume = 1.0,
-    WaveformType waveformType = WaveformType.sine,
   }) {
-    setSampleRate(sampleRate);
+    AudioTonePlatform.instance.init(sampleRate);
+    setFrequency(frequency);
     setSpeed(wpm);
     setDashDuration(dashDuration);
     setDotDashIntervalDuration(dotDashIntervalDuration);
     setWordsIntervalDuration(wordsIntervalDuration);
     setVolume(volume);
-    setWaveformType(waveformType);
-    AudioTonePlatform.instance.init();
   }
 
-  /// 设置音频采样率
-  /// Set Audio Sample Rate
+  /// 设置音频频率
+  /// Set Audio Frequency
+  /// default value 800Hz / 默认800Hz
   ///
-  /// [sampleRate] Audio Sample Rate / 音频采样率，默认44100Hz
-  void setSampleRate(AudioSampleRate sampleRate) {
-    _sampleRate = sampleRate;
+  /// [frequency] Audio Frequency / 音频频率
+  void setFrequency(AudioFrequency frequency) {
+    _frequency = frequency;
+    AudioTonePlatform.instance.setFrequency(frequency);
   }
 
   /// 设置基础速度（WPM，每分钟单词数）
@@ -78,6 +85,7 @@ class AudioTone {
       );
     }
     _wpm = wpm;
+    AudioTonePlatform.instance.setSpeed(wpm);
   }
 
   /// 设置破折号持续时间（点的倍数）
@@ -94,6 +102,7 @@ class AudioTone {
       );
     }
     _dashDuration = dotsTimes;
+    AudioTonePlatform.instance.setDashDuration(dotsTimes);
   }
 
   /// 设置点与破折号之间的间隔时长（点的倍数）
@@ -110,6 +119,7 @@ class AudioTone {
       );
     }
     _dotDashIntervalDuration = dotsTimes;
+    AudioTonePlatform.instance.setDotDashIntervalDuration(dotsTimes);
   }
 
   /// 设置单词间间隔时长（点的倍数）
@@ -126,6 +136,7 @@ class AudioTone {
       );
     }
     _wordsIntervalDuration = dotsTimes;
+    AudioTonePlatform.instance.setWordsIntervalDuration(dotsTimes);
   }
 
   /// 设置音量
@@ -142,14 +153,6 @@ class AudioTone {
       );
     }
     _volume = volume;
-  }
-
-  /// 设置波形类型
-  /// Set Waveform Type
-  /// default value sine / 默认正弦波
-  ///
-  /// [waveformType] Waveform Type / 波形类型
-  void setWaveformType(WaveformType waveformType) {
-    _waveformType = waveformType;
+    AudioTonePlatform.instance.setVolume(volume);
   }
 }

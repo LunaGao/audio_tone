@@ -1,3 +1,5 @@
+import 'package:audio_tone/audio_frequency.dart';
+import 'package:audio_tone/audio_sample_rate.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'audio_tone_method_channel.dart';
@@ -27,7 +29,35 @@ abstract class AudioTonePlatform extends PlatformInterface {
     throw UnimplementedError('platformVersion() has not been implemented.');
   }
 
-  Future<void> init() {
+  Future<void> init(AudioSampleRate sampleRate) {
     throw UnimplementedError('init() has not been implemented.');
+  }
+
+  Future<void> setFrequency(AudioFrequency frequency) {
+    throw UnimplementedError('setFrequency() has not been implemented.');
+  }
+
+  Future<void> setSpeed(int wpm) {
+    throw UnimplementedError('setSpeed() has not been implemented.');
+  }
+
+  Future<void> setDashDuration(int dashDuration) {
+    throw UnimplementedError('setDashDuration() has not been implemented.');
+  }
+
+  Future<void> setDotDashIntervalDuration(int dotDashIntervalDuration) {
+    throw UnimplementedError(
+      'setDotDashIntervalDuration() has not been implemented.',
+    );
+  }
+
+  Future<void> setWordsIntervalDuration(int wordsIntervalDuration) {
+    throw UnimplementedError(
+      'setWordsIntervalDuration() has not been implemented.',
+    );
+  }
+
+  Future<void> setVolume(double volume) {
+    throw UnimplementedError('setVolume() has not been implemented.');
   }
 }

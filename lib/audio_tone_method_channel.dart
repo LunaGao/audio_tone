@@ -1,3 +1,5 @@
+import 'package:audio_tone/audio_frequency.dart';
+import 'package:audio_tone/audio_sample_rate.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -18,7 +20,38 @@ class MethodChannelAudioTone extends AudioTonePlatform {
   }
 
   @override
-  Future<void> init() async {
-    await methodChannel.invokeMethod<void>('init');
+  Future<void> init(AudioSampleRate sampleRate) async {
+    await methodChannel.invokeMethod<void>('init', sampleRate.value);
+  }
+
+  @override
+  Future<void> setFrequency(AudioFrequency frequency) async {
+    await methodChannel.invokeMethod<void>('setFrequency', frequency.value);
+  }
+
+  @override
+  Future<void> setDashDuration(int dashDuration) async {
+    await methodChannel.invokeMethod<void>('setDashDuration', dashDuration);
+  }
+
+  @override
+  Future<void> setDotDashIntervalDuration(int dotDashIntervalDuration) async {
+    await methodChannel.invokeMethod<void>(
+      'setDotDashIntervalDuration',
+      dotDashIntervalDuration,
+    );
+  }
+
+  @override
+  Future<void> setWordsIntervalDuration(int wordsIntervalDuration) async {
+    await methodChannel.invokeMethod<void>(
+      'setWordsIntervalDuration',
+      wordsIntervalDuration,
+    );
+  }
+
+  @override
+  Future<void> setVolume(double volume) async {
+    await methodChannel.invokeMethod<void>('setVolume', volume);
   }
 }
