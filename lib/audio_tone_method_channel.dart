@@ -30,28 +30,60 @@ class MethodChannelAudioTone extends AudioTonePlatform {
   }
 
   @override
-  Future<void> setDashDuration(int dashDuration) async {
-    await methodChannel.invokeMethod<void>('setDashDuration', dashDuration);
+  Future<void> setSpeed(int wpm) async {
+    await methodChannel.invokeMethod<void>('setSpeed', wpm);
   }
 
   @override
-  Future<void> setDotDashIntervalDuration(int dotDashIntervalDuration) async {
+  Future<void> setDashDuration(int dotsTimes) async {
+    await methodChannel.invokeMethod<void>('setDashDuration', dotsTimes);
+  }
+
+  @override
+  Future<void> setDotDashIntervalDuration(int dotsTimes) async {
     await methodChannel.invokeMethod<void>(
       'setDotDashIntervalDuration',
-      dotDashIntervalDuration,
+      dotsTimes,
     );
   }
 
+  /// 设置字母之间的间隔时长（点的倍数）
+  /// Set Duration of a Letter Interval (Dot counts)
+  /// default value 3 dots, range 1-5 dots / 默认3个点，范围1-5个点
+  ///
+  /// [dotsTimes] Duration of a Letter Interval in dots / 字母之间的间隔时长（点的倍数）
   @override
-  Future<void> setWordsIntervalDuration(int wordsIntervalDuration) async {
+  Future<void> setLetterIntervalDuration(int dotsTimes) async {
     await methodChannel.invokeMethod<void>(
-      'setWordsIntervalDuration',
-      wordsIntervalDuration,
+      'setOneWhiteSpaceDuration',
+      dotsTimes,
+    );
+  }
+
+  /// 设置单词间间隔时长（点的倍数）
+  /// Set Duration of a Words Interval (Dot counts)
+  /// default value 7 dots, range 3-20 dots / 默认7个点，范围3-20个点
+  ///
+  /// [dotsTimes] Duration of a Words Interval in dots / 单词间间隔时长（点的倍数）
+  @override
+  Future<void> setWordsIntervalDuration(int dotsTimes) async {
+    await methodChannel.invokeMethod<void>(
+      'setTwoWhiteSpacesDuration',
+      dotsTimes,
     );
   }
 
   @override
   Future<void> setVolume(double volume) async {
     await methodChannel.invokeMethod<void>('setVolume', volume);
+  }
+
+  @override
+  Future<int> playMorseCode(String morseCode) async {
+    var result = await methodChannel.invokeMethod<int>(
+      'playMorseCode',
+      morseCode,
+    );
+    return result ?? 99;
   }
 }

@@ -35,6 +35,11 @@ class AudioTone {
   late int _dotDashIntervalDuration;
   int get dotDashIntervalDuration => _dotDashIntervalDuration;
 
+  /// 字母之间的间隔时长（点的倍数）
+  /// default value 3 dots, range 1-5 dots / 默认3个点，范围1-5个点
+  late int _letterIntervalDuration;
+  int get letterIntervalDuration => _letterIntervalDuration;
+
   /// 单词间间隔时长（点的倍数）
   /// default value 7 dots, range 3-20 dots / 默认7个点，范围3-20个点
   late int _wordsIntervalDuration;
@@ -88,7 +93,7 @@ class AudioTone {
     AudioTonePlatform.instance.setSpeed(wpm);
   }
 
-  /// 设置破折号持续时间（点的倍数）
+  /// 设置【划】持续时间（点的倍数）
   /// Set Duration of a Dash (Dot counts)
   /// default value 3 dots, range 2-10 dots / 默认3个点，范围2-10个点
   ///
@@ -120,6 +125,23 @@ class AudioTone {
     }
     _dotDashIntervalDuration = dotsTimes;
     AudioTonePlatform.instance.setDotDashIntervalDuration(dotsTimes);
+  }
+
+  /// 设置字母之间的间隔时长（点的倍数）
+  /// Set Duration of a Letter Interval (Dot counts)
+  /// default value 3 dots, range 1-5 dots / 默认3个点，范围1-5个点
+  ///
+  /// [dotsTimes] Duration of a Letter Interval in dots / 字母之间的间隔时长（点的倍数）
+  void setLetterIntervalDuration(int dotsTimes) {
+    if (dotsTimes < 1 || dotsTimes > 5) {
+      throw ArgumentError.value(
+        dotsTimes,
+        'dotsTimes',
+        'Letter interval duration must be between 1 and 5 dots',
+      );
+    }
+    _letterIntervalDuration = dotsTimes;
+    AudioTonePlatform.instance.setLetterIntervalDuration(dotsTimes);
   }
 
   /// 设置单词间间隔时长（点的倍数）

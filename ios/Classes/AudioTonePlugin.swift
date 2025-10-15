@@ -16,42 +16,42 @@ public class AudioTonePlugin: NSObject, FlutterPlugin {
     case "getPlatformVersion":
       result("iOS " + UIDevice.current.systemVersion)
     case "init":
-      let arguments = call.arguments as! [String: Any]
-      let sampleRate = arguments["sampleRate"] as! Int
+      let sampleRate = call.arguments as! Int
       if audioTonePlayer != nil {
         audioTonePlayer = nil
       }
       audioTonePlayer = AudioTonePlayer(sampleRate: Double(sampleRate))
     case "setFrequency":
-      let arguments = call.arguments as! [String: Any]
-      let frequency = arguments["frequency"] as! Int
+      let frequency = call.arguments as! Int
       audioTonePlayer?.setFrequency(frequency)
       result(nil)
     case "setSpeed":
-      let arguments = call.arguments as! [String: Any]
-      let wpm = arguments["wpm"] as! Int
+      let wpm = call.arguments as! Int
       audioTonePlayer?.setSpeed(wpm)
       result(nil)
     case "setDashDuration":
-      let arguments = call.arguments as! [String: Any]
-      let ditTimes = arguments["dashDuration"] as! Int
-      audioTonePlayer?.setDashDuration(ditTimes)
+      let dotTimes = call.arguments as! Int
+      audioTonePlayer?.setDashDuration(dotTimes)
       result(nil)
     case "setDotDashIntervalDuration":
-      let arguments = call.arguments as! [String: Any]
-      let ditTimes = arguments["dotDashIntervalDuration"] as! Int
-      audioTonePlayer?.setDotDashIntervalDuration(ditTimes)
+      let dotTimes = call.arguments as! Int
+      audioTonePlayer?.setDotDashIntervalDuration(dotTimes)
       result(nil)
-    case "setWordsIntervalDuration":
-      let arguments = call.arguments as! [String: Any]
-      let ditTimes = arguments["wordsIntervalDuration"] as! Int
-      audioTonePlayer?.setWordsIntervalDuration(ditTimes)
+    case "setOneWhiteSpaceDuration":
+      let dotTimes = call.arguments as! Int
+      audioTonePlayer?.setOneWhiteSpaceDuration(dotTimes)
+      result(nil)
+    case "setTwoWhiteSpacesDuration":
+      let dotTimes = call.arguments as! Int
+      audioTonePlayer?.setTwoWhiteSpacesDuration(dotTimes)
       result(nil)
     case "setVolume":
-      let arguments = call.arguments as! [String: Any]
-      let volume = arguments["volume"] as! Double
+      let volume = call.arguments as! Double
       audioTonePlayer?.setVolume(Float(volume))
       result(nil)
+    case "playMorseCode":
+      let morseCode = call.arguments as! String
+      result(audioTonePlayer?.playMorseCode(for: morseCode))
     default:
       result(FlutterMethodNotImplemented)
     }

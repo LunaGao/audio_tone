@@ -41,17 +41,33 @@ abstract class AudioTonePlatform extends PlatformInterface {
     throw UnimplementedError('setSpeed() has not been implemented.');
   }
 
-  Future<void> setDashDuration(int dashDuration) {
+  Future<void> setDashDuration(int dotsTimes) {
     throw UnimplementedError('setDashDuration() has not been implemented.');
   }
 
-  Future<void> setDotDashIntervalDuration(int dotDashIntervalDuration) {
+  Future<void> setDotDashIntervalDuration(int dotsTimes) {
     throw UnimplementedError(
       'setDotDashIntervalDuration() has not been implemented.',
     );
   }
 
-  Future<void> setWordsIntervalDuration(int wordsIntervalDuration) {
+  /// 设置字母之间的间隔时长（点的倍数）
+  /// Set Duration of a Letter Interval (Dot counts)
+  /// default value 3 dots, range 1-5 dots / 默认3个点，范围1-5个点
+  ///
+  /// [dotsTimes] Duration of a Letter Interval in dots / 字母之间的间隔时长（点的倍数）
+  Future<void> setLetterIntervalDuration(int dotsTimes) {
+    throw UnimplementedError(
+      'setLetterIntervalDuration() has not been implemented.',
+    );
+  }
+
+  /// 设置单词间间隔时长（点的倍数）
+  /// Set Duration of a Words Interval (Dot counts)
+  /// default value 7 dots, range 3-20 dots / 默认7个点，范围3-20个点
+  ///
+  /// [dotsTimes] Duration of a Words Interval in dots / 单词间间隔时长（点的倍数）
+  Future<void> setWordsIntervalDuration(int dotsTimes) {
     throw UnimplementedError(
       'setWordsIntervalDuration() has not been implemented.',
     );
@@ -59,5 +75,9 @@ abstract class AudioTonePlatform extends PlatformInterface {
 
   Future<void> setVolume(double volume) {
     throw UnimplementedError('setVolume() has not been implemented.');
+  }
+
+  Future<int> playMorseCode(String morseCode) {
+    throw UnimplementedError('playMorseCode() has not been implemented.');
   }
 }
