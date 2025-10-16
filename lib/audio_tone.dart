@@ -6,10 +6,6 @@ import 'audio_tone_platform_interface.dart';
 export 'audio_sample_rate.dart';
 
 class AudioTone {
-  Future<String?> getPlatformVersion() {
-    return AudioTonePlatform.instance.getPlatformVersion();
-  }
-
   // Audio Sample Rate （Frequency）/ 音频采样率
   // default 44100Hz / 默认44100Hz
   late AudioSampleRate _sampleRate;

@@ -12,14 +12,6 @@ class MethodChannelAudioTone extends AudioTonePlatform {
   final methodChannel = const MethodChannel('audio_tone');
 
   @override
-  Future<String?> getPlatformVersion() async {
-    final version = await methodChannel.invokeMethod<String>(
-      'getPlatformVersion',
-    );
-    return version;
-  }
-
-  @override
   Future<void> init(AudioSampleRate sampleRate) async {
     await methodChannel.invokeMethod<void>('init', sampleRate.value);
   }

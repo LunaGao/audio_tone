@@ -25,10 +25,6 @@ abstract class AudioTonePlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<String?> getPlatformVersion() {
-    throw UnimplementedError('platformVersion() has not been implemented.');
-  }
-
   Future<void> init(AudioSampleRate sampleRate) {
     throw UnimplementedError('init() has not been implemented.');
   }
