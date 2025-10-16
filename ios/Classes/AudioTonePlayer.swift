@@ -331,23 +331,15 @@ class AudioTonePlayer: NSObject {
     func isActuallyPlaying() -> Bool {
         return tapPlayerNode.isPlaying && audioEngine.isRunning
     }
+    
+    // 记录播放开始时间
+    private var playStartTime: TimeInterval = 0
 
-    // MARK: - 声音播放控制
+    // MARK: - 点按声音播放控制
 
     // 播放
     func playNow() {
-        displayTime("开始播放1")
-        
-        // 如果已经在播放，先停止之前的
-        if isTapPlaying {
-            tapPlayerNode.pause()
-//            tapPlayerNode.reset()
-            // 给音频系统一点时间来处理停止操作
-            Thread.sleep(forTimeInterval: 0.05)
-        }
-        
         isTapPlaying = true
-        
         // 确保音频引擎正在运行
         do {
             if !audioEngine.isRunning {
@@ -362,44 +354,41 @@ class AudioTonePlayer: NSObject {
             return
         }
         
-        displayTime("真正播放6")
-        // 开始一直播放，直到调用stop()
+        // 开始一直播放，直到调用pause()
         tapPlayerNode.play()
-        displayTime("真正播放7")
-        // 等待音频真正开始播放
-        while !tapPlayerNode.isPlaying {
-        }
-        
-        if tapPlayerNode.isPlaying {
-            displayTime("真正播放8")
-        } else {
-            print("警告：音频可能未能正常开始播放")
-        }
-
+        playStartTime = CACurrentMediaTime()
         displayTime("开始播放9")
     }
+
+    // 最短播放时间，0.05秒
+    let minimumPlayTime: TimeInterval = 0.05
 
     func playStop() {
         // 打印当前时间（精确到纳秒）
         displayTime("停止播放1")
         
-        // 停止播放节点
-        if tapPlayerNode.isPlaying {
-            tapPlayerNode.pause()
-            // 延迟重置，确保停止操作完成
-//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-//                self?.tapPlayerNode.reset()
-//            }
+        // 检查是否满足最少播放时间要求
+        let currentTime = CACurrentMediaTime()
+        let elapsedTime = currentTime - playStartTime
+        
+        if elapsedTime < minimumPlayTime && tapPlayerNode.isPlaying {
+            // 如果播放时间不足【minimumPlayTime】秒，等待剩余时间
+            let remainingTime = minimumPlayTime - elapsedTime
+            print("播放时间不足\(minimumPlayTime)秒，等待 \(remainingTime) 秒")
+            Thread.sleep(forTimeInterval: remainingTime)
         }
         
-        // 给音频系统一点时间来处理停止操作
-        Thread.sleep(forTimeInterval: 0.05)
+        // 停止播放节点
+        if tapPlayerNode.isPlaying {
+            // 这里使用暂停，因为不重新实例化tapPlayerNode
+            tapPlayerNode.pause()
+        }
         
-        displayTime("停止播放2")
-        print("============")
+        // 重置播放开始时间
+        playStartTime = 0
     }
 
-    // MARK: - 增加音频流
+    // MARK: - 给播放摩斯码增加音频流
 
     // 增加一个点到音频流中，高频
     private func playDot() {
@@ -436,7 +425,6 @@ class AudioTonePlayer: NSObject {
     private func generateTone(duration: Double) -> AVAudioPCMBuffer {
         let frameCount = AVAudioFrameCount(duration * sampleRate)
         
-        // 修正：使用可选绑定处理AVAudioFormat?
         guard let audioFormat = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1),
               let buffer = AVAudioPCMBuffer(pcmFormat: audioFormat, frameCapacity: frameCount) else {
             fatalError("无法创建音频缓冲区")
@@ -459,7 +447,6 @@ class AudioTonePlayer: NSObject {
     private func generateSilence(duration: Double) -> AVAudioPCMBuffer {
         let frameCount = AVAudioFrameCount(duration * sampleRate)
         
-        // 修正：使用可选绑定处理AVAudioFormat?
         guard let audioFormat = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1),
               let buffer = AVAudioPCMBuffer(pcmFormat: audioFormat, frameCapacity: frameCount) else {
             fatalError("无法创建静音缓冲区")

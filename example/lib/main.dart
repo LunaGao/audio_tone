@@ -18,7 +18,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  var audioTone = AudioTone(wpm: 5);
+  var audioTone = AudioTone(wpm: 100);
 
   @override
   void initState() {
@@ -35,7 +35,7 @@ class _MyAppState extends State<MyApp> {
             ListTile(
               title: const Text('Init Tone Player'),
               onTap: () async {
-                audioTone.playMorseCode(".--. .-");
+                audioTone.playMorseCode(".-.-.-.-.-.-.-.-.-.-.-.-");
               },
             ),
             InkWell(
