@@ -2,6 +2,7 @@
 
 ![Static Badge](https://img.shields.io/badge/bless-Cats-green)
 ![Static Badge](https://img.shields.io/badge/AI-doubao-pink)
+![Static Badge](https://img.shields.io/badge/AI-TRAE-pink)
 
 A new Flutter plugin project.
 

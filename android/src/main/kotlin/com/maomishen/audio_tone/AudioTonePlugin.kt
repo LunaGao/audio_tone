@@ -5,7 +5,6 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry.Registrar
 
 /** AudioTonePlugin */
 class AudioTonePlugin :
@@ -24,21 +23,6 @@ class AudioTonePlugin :
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "audio_tone")
         channel.setMethodCallHandler(this)
-        
-        // 初始化音频播放器（默认采样率44100Hz）
-        audioPlayer = AudioTonePlayer(44100)
-    }
-    
-    companion object {
-        @JvmStatic
-        fun registerWith(registrar: Registrar) {
-            val channel = MethodChannel(registrar.messenger(), "audio_tone")
-            val plugin = AudioTonePlugin()
-            channel.setMethodCallHandler(plugin)
-            
-            // 初始化音频播放器
-            plugin.audioPlayer = AudioTonePlayer(44100)
-        }
     }
 
     override fun onMethodCall(
@@ -46,103 +30,75 @@ class AudioTonePlugin :
         result: Result
     ) {
         when (call.method) {
-            "getPlatformVersion" -> {
-                result.success("Android ${android.os.Build.VERSION.RELEASE}")
-            }
-            
             "init" -> {
-                // 初始化方法，Android版本不需要特殊处理
+                val sampleRate = call.arguments as Int
+                audioPlayer = AudioTonePlayer(sampleRate)
                 result.success(0)
             }
             
             "setFrequency" -> {
-                val frequency = call.argument<Int>("frequency") ?: 800
+                val frequency = call.arguments as Int
                 audioPlayer?.setFrequency(frequency)
                 result.success(0)
             }
             
             "setSpeed" -> {
-                val wpm = call.argument<Int>("wpm") ?: 20
+                val wpm = call.arguments as Int
                 audioPlayer?.setSpeed(wpm)
                 result.success(0)
             }
             
             "setVolume" -> {
-                val volume = call.argument<Double>("volume") ?: 1.0
+                val volume = call.arguments as Double
                 audioPlayer?.setVolume(volume)
                 result.success(0)
             }
             
             "setDashDuration" -> {
-                val dotTimes = call.argument<Int>("dotTimes") ?: 3
+                val dotTimes = call.arguments as Int
                 audioPlayer?.setDashDuration(dotTimes)
                 result.success(0)
             }
             
             "setDotDashIntervalDuration" -> {
-                val dotTimes = call.argument<Int>("dotTimes") ?: 1
+                val dotTimes = call.arguments as Int
                 audioPlayer?.setDotDashIntervalDuration(dotTimes)
                 result.success(0)
             }
             
-            "setOneWhiteSpaceDuration" -> {
-                val dotTimes = call.argument<Int>("dotTimes") ?: 3
+            "setLetterIntervalDuration" -> {
+                val dotTimes = call.arguments as Int
                 audioPlayer?.setOneWhiteSpaceDuration(dotTimes)
                 result.success(0)
             }
             
-            "setTwoWhiteSpacesDuration" -> {
-                val dotTimes = call.argument<Int>("dotTimes") ?: 7
+            "setWordsIntervalDuration" -> {
+                val dotTimes = call.arguments as Int
                 audioPlayer?.setTwoWhiteSpacesDuration(dotTimes)
                 result.success(0)
             }
-            
-            "getDotDuration" -> {
-                // Android版本返回基础时长
-                result.success(0.12)
-            }
-            
-            "getDashDuration" -> {
-                // Android版本返回基础时长
-                result.success(0.36)
-            }
-            
-            "getDotDashIntervalDuration" -> {
-                // Android版本返回基础时长
-                result.success(0.12)
-            }
-            
-            "getOneWhiteSpaceDuration" -> {
-                // Android版本返回基础时长
-                result.success(0.36)
-            }
-            
-            "getTwoWhiteSpacesDuration" -> {
-                // Android版本返回基础时长
-                result.success(0.84)
-            }
-            
+
             "playMorseCode" -> {
-                val morseCode = call.argument<String>("morseCode") ?: ""
+                val morseCode = call.arguments as String
                 val resultCode = audioPlayer?.playMorseCode(morseCode) ?: -1
                 result.success(resultCode)
             }
-            
-            "playNow" -> {
-                audioPlayer?.playNow()
-                result.success(0)
-            }
-            
-            "playStop" -> {
-                audioPlayer?.playStop()
-                result.success(0)
-            }
-            
+
             "stopMorseCode" -> {
                 audioPlayer?.stopMorseCode()
                 result.success(0)
             }
+
+            "play" -> {
+                audioPlayer?.playNow()
+                result.success(0)
+            }
             
+            "stop" -> {
+                audioPlayer?.playStop()
+                result.success(0)
+            }
+
             else -> {
                 result.notImplemented()
             }

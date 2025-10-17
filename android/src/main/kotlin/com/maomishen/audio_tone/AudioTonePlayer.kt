@@ -1,6 +1,5 @@
 package com.maomishen.audio_tone
 
-import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioManager
@@ -8,7 +7,6 @@ import android.media.AudioTrack
 import android.os.Build
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 import kotlin.math.sin
 import kotlin.math.PI
 
@@ -45,23 +43,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
     // 音频配置常量
     private val channelConfig = AudioFormat.CHANNEL_OUT_MONO
     private val audioFormat = AudioFormat.ENCODING_PCM_FLOAT
-    
-    companion object {
-        // 摩斯码映射
-        private val morseCodeMap = mapOf(
-            'A' to ".-", 'B' to "-...", 'C' to "-.-.", 'D' to "-..",
-            'E' to ".", 'F' to "..-.", 'G' to "--.", 'H' to "....",
-            'I' to "..", 'J' to ".---", 'K' to "-.-", 'L' to ".-..",
-            'M' to "--", 'N' to "-.", 'O' to "---", 'P' to ".--.",
-            'Q' to "--.-", 'R' to ".-.", 'S' to "...", 'T' to "-",
-            'U' to "..-", 'V' to "...-", 'W' to ".--", 'X' to "-..-",
-            'Y' to "-.--", 'Z' to "--..",
-            '0' to "-----", '1' to ".----", '2' to "..---", '3' to "...--",
-            '4' to "....-", '5' to ".....", '6' to "-....", '7' to "--...",
-            '8' to "---..", '9' to "----."
-        )
-    }
-    
+
     // MARK: - 音频基础设置
     
     // 设置频率
@@ -162,18 +144,20 @@ class AudioTonePlayer(private val sampleRate: Int) {
         createTapAudioTrack()
         
         // 生成持续音调
-        val toneData = generateToneData(1.0) // 1秒循环
+        val toneData = generateToneData(100.0) // 1秒循环
         
         // 开始播放
         tapAudioTrack?.play()
-        
+        tapAudioTrack?.write(toneData, 0, toneData.size, AudioTrack.WRITE_NON_BLOCKING)
+
+
         // 循环写入数据
-        executor.execute {
-            while (isTapPlaying) {
-                tapAudioTrack?.write(toneData, 0, toneData.size, AudioTrack.WRITE_NON_BLOCKING)
-                Thread.sleep(100) // 每100ms写入一次
-            }
-        }
+//        executor.execute {
+//            while (isTapPlaying) {
+//                tapAudioTrack?.write(toneData, 0, toneData.size, AudioTrack.WRITE_NON_BLOCKING)
+//                Thread.sleep(100) // 每100ms写入一次
+//            }
+//        }
     }
     
     // 停止播放
@@ -304,7 +288,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
         
         for (i in 0 until frameCount) {
             val time = i.toDouble() / sampleRate.toDouble()
-            data[i] = (sin(2 * PI * frequency * time) * volume).toFloat()
+            data[i] = sin(2 * PI * frequency * time).toFloat()
         }
         
         println("生成音调: ${duration}秒, 频率: ${frequency}Hz, 采样数: ${frameCount}")

@@ -178,6 +178,11 @@ class AudioTone {
   /// Play Morse Code
   ///
   /// [morseCode] Morse Code / 摩尔斯电码
+  /// 输入内容限于".", "-", " ", "  " 四种。
+  /// "." 表示点，
+  /// "-" 表示划，
+  /// " "（一个空格） 表示字母间隔，
+  /// "  "（两个空格） 表示单词间隔。
   Future<void> playMorseCode(String morseCode) async {
     await AudioTonePlatform.instance.playMorseCode(morseCode);
   }
