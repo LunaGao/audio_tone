@@ -106,7 +106,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
     // 播放摩斯码
     fun playMorseCode(morseCode: String): Int {
         if (isPlaying) {
-            println("正在播放中，请等待完成")
+            // println("正在播放中，请等待完成")
             return 1
         }
         
@@ -116,13 +116,13 @@ class AudioTonePlayer(private val sampleRate: Int) {
         }
         
         if (morseCode.isEmpty()) {
-            println("错误: 输入文本为空")
+            // println("错误: 输入文本为空")
             return 2
         }
         
         // 检查输入是否只包含有效字符
         if (!morseCode.all { it == '.' || it == '-' || it == ' ' }) {
-            println("错误: 输入包含无效字符")
+            // println("错误: 输入包含无效字符")
             return 3
         }
         
@@ -170,13 +170,13 @@ class AudioTonePlayer(private val sampleRate: Int) {
                          if (bytesWritten != null && bytesWritten > 0) {
                              writePosition = (writePosition + bytesWritten) % toneData.size
                          } else if (bytesWritten != null && bytesWritten < 0) {
-                             println("写入音频数据错误: $bytesWritten")
+                             // println("写入音频数据错误: $bytesWritten")
                              break
                          }
                      }
                      Thread.sleep(50) // 减少间隔到50ms，更频繁地检查缓冲区状态
                  } catch (e: Exception) {
-                     println("持续播放错误: ${e.message}")
+                     // println("持续播放错误: ${e.message}")
                      break
                  }
              }
@@ -192,7 +192,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
         if (elapsedTime < minimumPlayTime && isTapPlaying) {
             // 如果播放时间不足0.1秒，等待剩余时间
             val remainingTime = minimumPlayTime - elapsedTime
-            println("播放时间不足0.1秒，等待 ${remainingTime}ms")
+            // println("播放时间不足0.1秒，等待 ${remainingTime}ms")
             Thread.sleep(remainingTime)
         }
         
@@ -268,7 +268,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
                         else -> continue
                     }
 
-                    println("$char:$duration")
+                    // println("$char:$duration")
                     
                     if (char == '.' || char == '-') {
                         // 播放音调
@@ -278,14 +278,14 @@ class AudioTonePlayer(private val sampleRate: Int) {
                         playSilence(duration)
                     }
                 }
-                println("Stop！")
+                // println("Stop！")
                 audioTrack?.stop()
                 audioTrack?.release()
                 audioTrack = null
                 isPlaying = false
                 
             } catch (e: Exception) {
-                println("播放摩斯码错误: ${e.message}")
+                // println("播放摩斯码错误: ${e.message}")
                 isPlaying = false
             }
         }
@@ -294,14 +294,14 @@ class AudioTonePlayer(private val sampleRate: Int) {
     // 播放音调
     private fun playTone(duration: Double) {
         val toneData = generateToneData(duration)
-        println("toneData:" + toneData.size)
+        // println("toneData:" + toneData.size)
         audioTrack?.write(toneData, 0, toneData.size, AudioTrack.WRITE_BLOCKING)
     }
     
     // 播放静音
     private fun playSilence(duration: Double) {
         val silenceData = generateSilenceData(duration)
-        println("silenceData:" + silenceData.size)
+        // println("silenceData:" + silenceData.size)
         audioTrack?.write(silenceData, 0, silenceData.size, AudioTrack.WRITE_BLOCKING)
     }
     
@@ -315,7 +315,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
             data[i] = sin(2 * PI * frequency * time).toFloat()
         }
         
-        println("生成音调: ${duration}秒, 频率: ${frequency}Hz, 采样数: ${frameCount}")
+        // println("生成音调: ${duration}秒, 频率: ${frequency}Hz, 采样数: ${frameCount}")
         return data
     }
     

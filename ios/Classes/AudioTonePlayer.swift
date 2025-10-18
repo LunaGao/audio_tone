@@ -105,9 +105,9 @@ class AudioTonePlayer: NSObject {
             // 激活音频会话
             try audioSession.setActive(true)
             
-            print("音频会话配置成功")
+            // print("音频会话配置成功")
         } catch {
-            print("音频会话配置失败: \(error.localizedDescription)")
+            // print("音频会话配置失败: \(error.localizedDescription)")
         }
     }
     
@@ -124,7 +124,7 @@ class AudioTonePlayer: NSObject {
         audioEngine.connect(playerNode, to: mainMixer, format: audioFormat)
         audioEngine.connect(tapPlayerNode, to: mainMixer, format: audioFormat)
         
-        print("音频引擎配置完成")
+        // print("音频引擎配置完成")
     }
     
     // 结束
@@ -133,7 +133,7 @@ class AudioTonePlayer: NSObject {
         playStop() // 停止按键播放
         tapPlayerNode.stop()
         tapPlayerNode.reset()
-        print("AudioTonePlayer 已释放")
+        // print("AudioTonePlayer 已释放")
     }
     
     // MARK: - 播放/停止 摩斯码
@@ -141,7 +141,7 @@ class AudioTonePlayer: NSObject {
     // 播放摩斯码，只接受".", "-", " "，这三种数据。
     func playMorseCode(for morseCode: String) -> Int {
         guard !isPlaying else {
-            print("正在播放中，请等待完成")
+            // print("正在播放中，请等待完成")
             return 1
         }
         
@@ -152,13 +152,13 @@ class AudioTonePlayer: NSObject {
         }
         
         guard !morseCode.isEmpty else {
-            print("错误: 输入文本为空")
+            // print("错误: 输入文本为空")
             return 2
         }
         
         // 检查输入是否只包含有效字符
         guard morseCode.allSatisfy({ $0 == "." || $0 == "-" || $0 == " " }) else {
-            print("错误: 输入包含无效字符")
+            // print("错误: 输入包含无效字符")
             return 3
         }
         
@@ -169,10 +169,10 @@ class AudioTonePlayer: NSObject {
         do {
             if !audioEngine.isRunning {
                 try audioEngine.start()
-                print("音频引擎启动成功")
+                // print("音频引擎启动成功")
             }
         } catch {
-            print("音频引擎启动失败: \(error.localizedDescription)")
+            // print("音频引擎启动失败: \(error.localizedDescription)")
             isPlaying = false
             return 10
         }
@@ -217,7 +217,7 @@ class AudioTonePlayer: NSObject {
     private func playSymbols(_ symbols: [String], index: Int) {
         guard index < symbols.count, isPlaying else {
             // 所有符号播放完毕
-            print("播放完成")
+            // print("播放完成")
             isPlaying = false
             
             // 延迟停止，确保最后声音播放完毕
@@ -228,12 +228,12 @@ class AudioTonePlayer: NSObject {
         }
         
         let symbol = symbols[index]
-        print("播放符号 \(index + 1)/\(symbols.count): '\(symbol)'")
+        // print("播放符号 \(index + 1)/\(symbols.count): '\(symbol)'")
         
         // 播放当前符号的所有点和划
         playSymbolCharacters(Array(symbol), index: 0) { [weak self] in
             self?.playFinishedNotify()
-            print("play finished")
+            // print("play finished")
         }
     }
     
@@ -282,7 +282,7 @@ class AudioTonePlayer: NSObject {
 
         // 如果是第一个字符，需要启动播放
         if index == 0 {
-            print("开始播放节点")
+            // print("开始播放节点")
             playerNode.play()
         }
     }
@@ -309,9 +309,9 @@ class AudioTonePlayer: NSObject {
         // 取消激活音频会话
         do {
             try AVAudioSession.sharedInstance().setActive(false)
-            print("音频会话已取消激活")
+            // print("音频会话已取消激活")
         } catch {
-            print("取消音频会话激活失败: \(error.localizedDescription)")
+            // print("取消音频会话激活失败: \(error.localizedDescription)")
         }
     }
 
@@ -319,7 +319,7 @@ class AudioTonePlayer: NSObject {
     func displayTime(_ title: String) {
         // 打印当前时间（精确到纳秒）
         let now = CACurrentMediaTime()
-        print("\(title) \(now)")
+        // print("\(title) \(now)")
     }
     
     // 播放完成通知
@@ -344,12 +344,12 @@ class AudioTonePlayer: NSObject {
         do {
             if !audioEngine.isRunning {
                 try audioEngine.start()
-                print("音频引擎启动成功")
+                // print("音频引擎启动成功")
                 // 音频引擎启动后需要一点时间来稳定
                 Thread.sleep(forTimeInterval: 0.1)
             }
         } catch {
-            print("音频引擎启动失败: \(error.localizedDescription)")
+            // print("音频引擎启动失败: \(error.localizedDescription)")
             isTapPlaying = false
             return
         }
@@ -357,7 +357,7 @@ class AudioTonePlayer: NSObject {
         // 开始一直播放，直到调用pause()
         tapPlayerNode.play()
         playStartTime = CACurrentMediaTime()
-        displayTime("开始播放9")
+        // displayTime("开始播放9")
     }
 
     // 最短播放时间，0.05秒
@@ -365,7 +365,7 @@ class AudioTonePlayer: NSObject {
 
     func playStop() {
         // 打印当前时间（精确到纳秒）
-        displayTime("停止播放1")
+        // displayTime("停止播放1")
         
         // 检查是否满足最少播放时间要求
         let currentTime = CACurrentMediaTime()
@@ -374,7 +374,7 @@ class AudioTonePlayer: NSObject {
         if elapsedTime < minimumPlayTime && tapPlayerNode.isPlaying {
             // 如果播放时间不足【minimumPlayTime】秒，等待剩余时间
             let remainingTime = minimumPlayTime - elapsedTime
-            print("播放时间不足\(minimumPlayTime)秒，等待 \(remainingTime) 秒")
+            // print("播放时间不足\(minimumPlayTime)秒，等待 \(remainingTime) 秒")
             Thread.sleep(forTimeInterval: remainingTime)
         }
         
@@ -438,7 +438,7 @@ class AudioTonePlayer: NSObject {
             floatBuffer[frame] = Float(sin(2 * Double.pi * frequency * time))
         }
         
-        print("生成音调: \(duration)秒, 频率: \(frequency)Hz, 采样数: \(frameCount)")
+        // print("生成音调: \(duration)秒, 频率: \(frequency)Hz, 采样数: \(frameCount)")
         return buffer
     }
     
@@ -459,7 +459,7 @@ class AudioTonePlayer: NSObject {
             floatBuffer[frame] = 0.0
         }
         
-        print("生成静音: \(duration)秒, 采样数: \(frameCount)")
+        // print("生成静音: \(duration)秒, 采样数: \(frameCount)")
         return buffer
     }
 
