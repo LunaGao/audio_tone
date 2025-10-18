@@ -9,6 +9,8 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import kotlin.math.sin
 import kotlin.math.PI
+import kotlin.math.max
+import kotlin.math.min
 
 class AudioTonePlayer(private val sampleRate: Int) {
     // 音频配置
@@ -93,10 +95,10 @@ class AudioTonePlayer(private val sampleRate: Int) {
     
     // 更新时间配置
     private fun upgradeDuration() {
-        this.dashDuration = this.dashDotTimes.toDouble() * this.dotDuration
-        this.dotDashDuration = this.dotDashIntervalDotTimes.toDouble() * this.dotDuration
-        this.oneWhiteSpaceDuration = this.oneWhiteSpaceDotTimes.toDouble() * this.dotDuration
-        this.twoWhiteSpacesDuration = this.twoWhiteSpacesDotTimes.toDouble() * this.dotDuration
+        this.dashDuration = this.dashDotTimes * this.dotDuration
+        this.dotDashDuration = this.dotDashIntervalDotTimes * this.dotDuration
+        this.oneWhiteSpaceDuration = this.oneWhiteSpaceDotTimes * this.dotDuration
+        this.twoWhiteSpacesDuration = this.twoWhiteSpacesDotTimes * this.dotDuration
     }
     
     // MARK: - 播放控制
@@ -143,21 +145,42 @@ class AudioTonePlayer(private val sampleRate: Int) {
         // 创建音频轨道
         createTapAudioTrack()
         
-        // 生成持续音调
-        val toneData = generateToneData(100.0) // 1秒循环
+        // 生成持续音调（生成2秒的音频数据用于循环，减少拼接频率）
+        val toneData = generateToneData(2.0) // 2秒循环数据，减少缓冲区压力
         
         // 开始播放
         tapAudioTrack?.play()
-        tapAudioTrack?.write(toneData, 0, toneData.size, AudioTrack.WRITE_NON_BLOCKING)
+        
+        // 预填充缓冲区，避免初始欠载
+        val prefillSize = min(toneData.size / 4, 8192) // 预填充0.5秒数据
+        tapAudioTrack?.write(toneData, 0, prefillSize, AudioTrack.WRITE_BLOCKING)
 
-
-        // 循环写入数据
-//        executor.execute {
-//            while (isTapPlaying) {
-//                tapAudioTrack?.write(toneData, 0, toneData.size, AudioTrack.WRITE_NON_BLOCKING)
-//                Thread.sleep(100) // 每100ms写入一次
-//            }
-//        }
+        // 循环写入数据以维持持续播放
+        executor.execute {
+             var writePosition = prefillSize
+             while (isTapPlaying) {
+                 try {
+                     // 检查播放状态并写入数据
+                     if (tapAudioTrack?.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                         // 计算可写入的数据量，避免缓冲区溢出
+                         val remainingSpace = toneData.size - writePosition
+                         val writeSize = min(4096, remainingSpace) // 每次最多写入4096个采样
+                         
+                         val bytesWritten = tapAudioTrack?.write(toneData, writePosition, writeSize, AudioTrack.WRITE_NON_BLOCKING)
+                         if (bytesWritten != null && bytesWritten > 0) {
+                             writePosition = (writePosition + bytesWritten) % toneData.size
+                         } else if (bytesWritten != null && bytesWritten < 0) {
+                             println("写入音频数据错误: $bytesWritten")
+                             break
+                         }
+                     }
+                     Thread.sleep(50) // 减少间隔到50ms，更频繁地检查缓冲区状态
+                 } catch (e: Exception) {
+                     println("持续播放错误: ${e.message}")
+                     break
+                 }
+             }
+        }
     }
     
     // 停止播放
@@ -228,12 +251,12 @@ class AudioTonePlayer(private val sampleRate: Int) {
     
     // 播放符号序列
     private fun playSymbols(symbols: String) {
+        createAudioTrack()
+        // 先启动播放，然后立即预填充
+        audioTrack?.play()
+        
         executor.execute {
             try {
-                // 创建音频轨道
-                createAudioTrack()
-                audioTrack?.play()
-                
                 for (char in symbols) {
                     if (!isPlaying) break
                     
@@ -245,6 +268,8 @@ class AudioTonePlayer(private val sampleRate: Int) {
                         't' -> twoWhiteSpacesDuration
                         else -> continue
                     }
+
+                    println("$char:$duration")
                     
                     if (char == '.' || char == '-') {
                         // 播放音调
@@ -254,7 +279,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
                         playSilence(duration)
                     }
                 }
-                
+                println("Stop！")
                 audioTrack?.stop()
                 audioTrack?.release()
                 audioTrack = null
@@ -270,6 +295,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
     // 播放音调
     private fun playTone(duration: Double) {
         val toneData = generateToneData(duration)
+        println("toneData:" + toneData.size)
         audioTrack?.write(toneData, 0, toneData.size, AudioTrack.WRITE_NON_BLOCKING)
         Thread.sleep((duration * 1000).toLong())
     }
@@ -277,6 +303,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
     // 播放静音
     private fun playSilence(duration: Double) {
         val silenceData = generateSilenceData(duration)
+        println("silenceData:" + silenceData.size)
         audioTrack?.write(silenceData, 0, silenceData.size, AudioTrack.WRITE_NON_BLOCKING)
         Thread.sleep((duration * 1000).toLong())
     }
@@ -298,13 +325,16 @@ class AudioTonePlayer(private val sampleRate: Int) {
     // 生成静音数据
     private fun generateSilenceData(duration: Double): FloatArray {
         val frameCount = (duration * sampleRate).toInt()
-        return FloatArray(frameCount) // 默认值为0.0
+        // 确保最小缓冲区大小，避免过小数据块
+        val minFrameCount = 1024
+        val actualFrameCount = max(frameCount, minFrameCount)
+        return FloatArray(actualFrameCount) // 默认值为0.0
     }
     
     // 创建音频轨道
     private fun createAudioTrack() {
         val bufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat)
-        
+        // 16048
         audioTrack = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             AudioTrack.Builder()
                 .setAudioAttributes(
@@ -341,7 +371,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
     // 创建持续音调音频轨道
     private fun createTapAudioTrack() {
         val bufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat)
-        
+
         tapAudioTrack = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             AudioTrack.Builder()
                 .setAudioAttributes(

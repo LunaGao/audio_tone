@@ -66,13 +66,13 @@ class AudioTonePlugin :
                 result.success(0)
             }
             
-            "setLetterIntervalDuration" -> {
+            "setOneWhiteSpaceDuration" -> {
                 val dotTimes = call.arguments as Int
                 audioPlayer?.setOneWhiteSpaceDuration(dotTimes)
                 result.success(0)
             }
             
-            "setWordsIntervalDuration" -> {
+            "setTwoWhiteSpacesDuration" -> {
                 val dotTimes = call.arguments as Int
                 audioPlayer?.setTwoWhiteSpacesDuration(dotTimes)
                 result.success(0)

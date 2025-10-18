@@ -52,6 +52,7 @@ class AudioTone {
     int wpm = 10,
     int dashDuration = 3,
     int dotDashIntervalDuration = 1,
+    int letterIntervalDuration = 3,
     int wordsIntervalDuration = 7,
     double volume = 1.0,
   }) {
@@ -60,6 +61,7 @@ class AudioTone {
     setSpeed(wpm);
     setDashDuration(dashDuration);
     setDotDashIntervalDuration(dotDashIntervalDuration);
+    setLetterIntervalDuration(letterIntervalDuration);
     setWordsIntervalDuration(wordsIntervalDuration);
     setVolume(volume);
   }
