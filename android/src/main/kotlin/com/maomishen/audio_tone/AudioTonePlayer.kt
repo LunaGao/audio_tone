@@ -250,13 +250,12 @@ class AudioTonePlayer(private val sampleRate: Int) {
     }
     
     // 播放符号序列
-    private fun playSymbols(symbols: String) {
-        createAudioTrack()
-        // 先启动播放，然后立即预填充
-        audioTrack?.play()
-        
+    private fun playSymbols(symbols: String) {        
         executor.execute {
             try {
+                createAudioTrack()
+                // 先启动播放，然后立即预填充
+                audioTrack?.play()
                 for (char in symbols) {
                     if (!isPlaying) break
                     
@@ -296,16 +295,16 @@ class AudioTonePlayer(private val sampleRate: Int) {
     private fun playTone(duration: Double) {
         val toneData = generateToneData(duration)
         println("toneData:" + toneData.size)
-        audioTrack?.write(toneData, 0, toneData.size, AudioTrack.WRITE_NON_BLOCKING)
-        Thread.sleep((duration * 1000).toLong())
+        audioTrack?.write(toneData, 0, toneData.size, AudioTrack.WRITE_BLOCKING)
+//        Thread.sleep((duration * 1000).toLong())
     }
     
     // 播放静音
     private fun playSilence(duration: Double) {
         val silenceData = generateSilenceData(duration)
         println("silenceData:" + silenceData.size)
-        audioTrack?.write(silenceData, 0, silenceData.size, AudioTrack.WRITE_NON_BLOCKING)
-        Thread.sleep((duration * 1000).toLong())
+        audioTrack?.write(silenceData, 0, silenceData.size, AudioTrack.WRITE_BLOCKING)
+//        Thread.sleep((duration * 1000).toLong())
     }
     
     // 生成音调数据
@@ -325,10 +324,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
     // 生成静音数据
     private fun generateSilenceData(duration: Double): FloatArray {
         val frameCount = (duration * sampleRate).toInt()
-        // 确保最小缓冲区大小，避免过小数据块
-        val minFrameCount = 1024
-        val actualFrameCount = max(frameCount, minFrameCount)
-        return FloatArray(actualFrameCount) // 默认值为0.0
+        return FloatArray(frameCount) // 默认值为0.0
     }
     
     // 创建音频轨道

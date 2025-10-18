@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:audio_tone/audio_frequency.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_tone/audio_tone.dart';
 
@@ -15,7 +16,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  var audioTone = AudioTone(wpm: 5, dashDuration: 6);
+  var audioTone = AudioTone(wpm: 5);
 
   @override
   void initState() {
