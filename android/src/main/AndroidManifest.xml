@@ -1,3 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="com.maomishen.audio_tone">
+  <attribution android:tag="playAudioTone"
+               android:label="@string/audio_tone_play_attribution_label" />
 </manifest>

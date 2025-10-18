@@ -9,7 +9,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:audio_tone/audio_tone.dart';
+// import 'package:audio_tone/audio_tone.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();

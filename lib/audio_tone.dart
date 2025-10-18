@@ -52,6 +52,7 @@ class AudioTone {
     int wpm = 10,
     int dashDuration = 3,
     int dotDashIntervalDuration = 1,
+    int letterIntervalDuration = 3,
     int wordsIntervalDuration = 7,
     double volume = 1.0,
   }) {
@@ -60,6 +61,7 @@ class AudioTone {
     setSpeed(wpm);
     setDashDuration(dashDuration);
     setDotDashIntervalDuration(dotDashIntervalDuration);
+    setLetterIntervalDuration(letterIntervalDuration);
     setWordsIntervalDuration(wordsIntervalDuration);
     setVolume(volume);
   }
@@ -178,6 +180,11 @@ class AudioTone {
   /// Play Morse Code
   ///
   /// [morseCode] Morse Code / 摩尔斯电码
+  /// 输入内容限于".", "-", " ", "  " 四种。
+  /// "." 表示点，
+  /// "-" 表示划，
+  /// " "（一个空格） 表示字母间隔，
+  /// "  "（两个空格） 表示单词间隔。
   Future<void> playMorseCode(String morseCode) async {
     await AudioTonePlatform.instance.playMorseCode(morseCode);
   }
