@@ -296,7 +296,6 @@ class AudioTonePlayer(private val sampleRate: Int) {
         val toneData = generateToneData(duration)
         println("toneData:" + toneData.size)
         audioTrack?.write(toneData, 0, toneData.size, AudioTrack.WRITE_BLOCKING)
-//        Thread.sleep((duration * 1000).toLong())
     }
     
     // 播放静音
@@ -304,7 +303,6 @@ class AudioTonePlayer(private val sampleRate: Int) {
         val silenceData = generateSilenceData(duration)
         println("silenceData:" + silenceData.size)
         audioTrack?.write(silenceData, 0, silenceData.size, AudioTrack.WRITE_BLOCKING)
-//        Thread.sleep((duration * 1000).toLong())
     }
     
     // 生成音调数据
