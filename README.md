@@ -56,6 +56,10 @@ await audioTone.stop();
 // Play Morse code
 await audioTone.playMorseCode(".-.-  .-.- .");
 
+// Get Morse code playback duration
+double duration = await audioTone.getMorseCodePlayDuration(".-.-  .-.- .");
+print("Playback duration: $duration seconds");
+
 // Plugin supports:
 // "." - Dot (short sound)
 // "-" - Dash (long sound)
@@ -111,6 +115,7 @@ audioTone.setVolume(0.5); // Set to 50% volume
 - `setWordsIntervalDuration(int dotsTimes)` - Set word interval (3-20 dots)
 - `setVolume(double volume)` - Set volume (0.0-1.0)
 - `playMorseCode(String morseCode)` - Play Morse code string
+- `getMorseCodePlayDuration(String morseCode)` - Get Morse code playback duration in seconds
 - `play()` - Start tone playback
 - `stop()` - Stop tone playback
 

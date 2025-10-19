@@ -200,4 +200,13 @@ class AudioTone {
   Future<void> stop() async {
     await AudioTonePlatform.instance.stop();
   }
+
+  /// 获取摩斯电码播放时长（秒）
+  /// Get Morse code playback duration (seconds)
+  ///
+  /// [morseCode] Morse Code / 摩尔斯电码
+  /// 返回播放时长（秒）/ Returns playback duration in seconds
+  Future<double> getMorseCodePlayDuration(String morseCode) async {
+    return await AudioTonePlatform.instance.getMorseCodePlayDuration(morseCode);
+  }
 }

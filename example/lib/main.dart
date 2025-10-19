@@ -23,9 +23,14 @@ class _MyAppState extends State<MyApp> {
   }
 
   void playMorseCode() {
-    audioTone.playMorseCode(".-.-  .-.- .").then((_) {
-      log("end");
+    audioTone.getMorseCodePlayDuration(".-.-  .-.- .").then((duration) {
+      Future.delayed(Duration(milliseconds: (duration * 1000).toInt())).then((
+        _,
+      ) {
+        log("end");
+      });
     });
+    audioTone.playMorseCode(".-.-  .-.- .");
   }
 
   @override
@@ -50,6 +55,15 @@ class _MyAppState extends State<MyApp> {
               onTapUp: (details) {
                 log("E ${DateTime.now()}");
                 audioTone.stop();
+              },
+            ),
+            ListTile(
+              title: const Text('Test getMorseCodePlayDuration'),
+              onTap: () async {
+                final duration = await audioTone.getMorseCodePlayDuration(
+                  ".-.-  .-.- .",
+                );
+                log("Morse code duration: $duration seconds");
               },
             ),
           ],

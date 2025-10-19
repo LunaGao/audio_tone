@@ -79,6 +79,15 @@ class MethodChannelAudioTone extends AudioTonePlatform {
     return result ?? 99;
   }
 
+  @override
+  Future<double> getMorseCodePlayDuration(String morseCode) async {
+    var result = await methodChannel.invokeMethod<double>(
+      'getMorseCodePlayDuration',
+      morseCode,
+    );
+    return result ?? 0.0;
+  }
+
   /// 播放
   /// Play
   @override

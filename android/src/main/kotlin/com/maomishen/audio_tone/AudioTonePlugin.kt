@@ -98,6 +98,11 @@ class AudioTonePlugin :
                 audioPlayer?.playStop()
                 result.success(0)
             }
+            "getMorseCodePlayDuration" -> {
+                val morseCode = call.arguments as String
+                val duration = audioPlayer?.getMorseCodePlayDuration(morseCode) ?: 0.0
+                result.success(duration)
+            }
 
             else -> {
                 result.notImplemented()

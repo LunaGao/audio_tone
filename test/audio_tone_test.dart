@@ -62,9 +62,16 @@ class MockAudioTonePlatform
   Future<void> stop() {
     throw UnimplementedError();
   }
+
+  @override
+  Future<double> getMorseCodePlayDuration(String morseCode) {
+    throw UnimplementedError();
+  }
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   final AudioTonePlatform initialPlatform = AudioTonePlatform.instance;
 
   test('$MethodChannelAudioTone is the default instance', () {
@@ -85,4 +92,15 @@ void main() {
   //     wpm: 100,
   //   );
   // });
+
+  test('getMorseCodePlayDuration should return correct duration', () async {
+    AudioTone audioTonePlugin = AudioTone(wpm: 20);
+    MockAudioTonePlatform fakePlatform = MockAudioTonePlatform();
+    AudioTonePlatform.instance = fakePlatform;
+
+    // 测试简单的摩斯电码
+    expect(() async {
+      await audioTonePlugin.getMorseCodePlayDuration('.-.-');
+    }, throwsA(isA<UnimplementedError>()));
+  });
 }

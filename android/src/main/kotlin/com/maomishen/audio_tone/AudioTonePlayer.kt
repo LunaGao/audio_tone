@@ -404,4 +404,24 @@ class AudioTonePlayer(private val sampleRate: Int) {
         stopMorseCode()
         executor.shutdown()
     }
+    
+    // 获取摩斯码播放时长
+    fun getMorseCodePlayDuration(morseCode: String): Double {
+        val symbols = preprocessMorseCode(morseCode)
+        var duration = 0.0
+        
+        // 遍历处理后的符号，计算总时长
+        for (char in symbols) {
+            duration += when (char) {
+                '.' -> dotDuration
+                '-' -> dashDuration
+                'i' -> dotDashDuration
+                'o' -> oneWhiteSpaceDuration
+                't' -> twoWhiteSpacesDuration
+                else -> 0.0
+            }
+        }
+        
+        return duration
+    }
 }

@@ -163,7 +163,6 @@ class AudioTonePlayer: NSObject {
         }
         
         let symbols = preprocessMorseCode(morseCode)
-        let playDuration = getPlayDuration(symbols)
         
         isPlaying = true
         // 准备并启动音频引擎
@@ -411,9 +410,10 @@ class AudioTonePlayer: NSObject {
 
     // 获取当前播放时长
     func getPlayDuration(_ morseCode: String) -> Double {
+        let symbols = preprocessMorseCode(morseCode)
         var duration = Double(0);
         // 遍历摩斯码中的每个字符
-        for char in morseCode {
+        for char in symbols {
             if char == "." {
                 // 一个点
                 duration += self.dotDuration

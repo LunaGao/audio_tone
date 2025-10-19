@@ -56,6 +56,10 @@ await audioTone.stop();
 // 播放摩斯电码
 await audioTone.playMorseCode(".-.-  .-.- .");
 
+// 获取摩斯电码播放时长
+double duration = await audioTone.getMorseCodePlayDuration(".-.-  .-.- .");
+print("播放时长: $duration 秒");
+
 // 插件支持：
 // "." - 点（短音）
 // "-" - 划（长音）
@@ -111,6 +115,7 @@ audioTone.setVolume(0.5); // 设置为50%音量
 - `setWordsIntervalDuration(int dotsTimes)` - 设置单词间隔 (3-20 点)
 - `setVolume(double volume)` - 设置音量 (0.0-1.0)
 - `playMorseCode(String morseCode)` - 播放摩斯电码字符串
+- `getMorseCodePlayDuration(String morseCode)` - 获取摩斯电码播放时长（秒）
 - `play()` - 开始音调播放
 - `stop()` - 停止音调播放
 
