@@ -1,3 +1,9 @@
+## 0.0.2
+
+* Added `getMorseCodePlayDuration` method for calculating Morse code playback duration
+* Fixed iOS platform code implementation errors
+* Improved audio playback performance and stability
+
 ## 0.0.1
 
 * Commented out all print statements in native iOS and Android code

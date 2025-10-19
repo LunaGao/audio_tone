@@ -23,7 +23,7 @@ Add dependency to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  audio_tone: ^0.0.1
+  audio_tone: ^0.0.2
 ```
 
 Then run:
@@ -248,16 +248,5 @@ Created with ❤️ by [LunaGao](https://github.com/LunaGao)
 ## Support 💖
 
 If you find this plugin helpful, please give it a ⭐ on [GitHub](https://github.com/LunaGao/audio_tone)!
-
-## Changelog 📝
-
-### 0.0.1
-- Initial version
-- Basic audio tone generation support
-- Morse code playback support
-- Android and iOS platform support
-- Complete API interface
-
----
 
 **Note**: This is a Flutter plugin project containing native implementation code for Android and iOS platforms. For Flutter development help, please check the [online documentation](https://docs.flutter.dev).

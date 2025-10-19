@@ -23,7 +23,7 @@
 
 ```yaml
 dependencies:
-  audio_tone: ^0.0.1
+  audio_tone: ^0.0.2
 ```
 
 然后运行：
@@ -248,16 +248,5 @@ audio_tone/
 ## 支持 💖
 
 如果您觉得这个插件有帮助，请在[GitHub](https://github.com/LunaGao/audio_tone)上给它一个⭐！
-
-## 更新日志 📝
-
-### 0.0.1
-- 初始版本
-- 支持基础音频音调生成
-- 支持摩斯电码播放
-- 支持Android和iOS平台
-- 提供完整的API接口
-
----
 
 **注意**：这是一个Flutter插件项目，包含Android和iOS平台的原生实现代码。如需Flutter开发帮助，请查看[在线文档](https://docs.flutter.dev)。
