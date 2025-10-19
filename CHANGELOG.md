@@ -1,3 +1,9 @@
+## 0.0.3
+
+* Fixed Android audio playback issues in specific scenarios
+* Enhanced tap-to-play functionality and user experience
+* Improved audio playback reliability on Android devices
+
 ## 0.0.2
 
 * Added `getMorseCodePlayDuration` method for calculating Morse code playback duration
