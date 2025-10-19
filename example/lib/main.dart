@@ -15,7 +15,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  var audioTone = AudioTone(wpm: 5);
+  var audioTone = AudioTone(wpm: 80);
 
   @override
   void initState() {
@@ -23,14 +23,14 @@ class _MyAppState extends State<MyApp> {
   }
 
   void playMorseCode() {
-    audioTone.getMorseCodePlayDuration(".-.-  .-.- .").then((duration) {
+    audioTone.getMorseCodePlayDuration("..-- --").then((duration) {
       Future.delayed(Duration(milliseconds: (duration * 1000).toInt())).then((
         _,
       ) {
         log("end");
       });
     });
-    audioTone.playMorseCode(".-.-  .-.- .");
+    audioTone.playMorseCode("..-- --");
   }
 
   @override
@@ -60,9 +60,7 @@ class _MyAppState extends State<MyApp> {
             ListTile(
               title: const Text('Test getMorseCodePlayDuration'),
               onTap: () async {
-                final duration = await audioTone.getMorseCodePlayDuration(
-                  ".-.-  .-.- .",
-                );
+                final duration = await audioTone.getMorseCodePlayDuration("--");
                 log("Morse code duration: $duration seconds");
               },
             ),

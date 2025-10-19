@@ -40,7 +40,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
     // 线程池
     private val executor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private var playStartTime: Long = 0
-    private val minimumPlayTime: Long = 100 // 最小播放时间，毫秒
+    private val minimumPlayTime: Long = 50 // 最小播放时间，毫秒
     
     // 音频配置常量
     private val channelConfig = AudioFormat.CHANNEL_OUT_MONO
@@ -146,39 +146,15 @@ class AudioTonePlayer(private val sampleRate: Int) {
         createTapAudioTrack()
         
         // 生成持续音调（生成2秒的音频数据用于循环，减少拼接频率）
-        val toneData = generateToneData(2.0) // 2秒循环数据，减少缓冲区压力
+        val toneData = generateToneData(0.01) // 2秒循环数据，减少缓冲区压力
         
         // 开始播放
         tapAudioTrack?.play()
-        
-        // 预填充缓冲区，避免初始欠载
-        val prefillSize = min(toneData.size / 4, 8192) // 预填充0.5秒数据
-        tapAudioTrack?.write(toneData, 0, prefillSize, AudioTrack.WRITE_BLOCKING)
 
         // 循环写入数据以维持持续播放
         executor.execute {
-             var writePosition = prefillSize
              while (isTapPlaying) {
-                 try {
-                     // 检查播放状态并写入数据
-                     if (tapAudioTrack?.playState == AudioTrack.PLAYSTATE_PLAYING) {
-                         // 计算可写入的数据量，避免缓冲区溢出
-                         val remainingSpace = toneData.size - writePosition
-                         val writeSize = min(4096, remainingSpace) // 每次最多写入4096个采样
-                         
-                         val bytesWritten = tapAudioTrack?.write(toneData, writePosition, writeSize, AudioTrack.WRITE_NON_BLOCKING)
-                         if (bytesWritten != null && bytesWritten > 0) {
-                             writePosition = (writePosition + bytesWritten) % toneData.size
-                         } else if (bytesWritten != null && bytesWritten < 0) {
-                             // println("写入音频数据错误: $bytesWritten")
-                             break
-                         }
-                     }
-                     Thread.sleep(50) // 减少间隔到50ms，更频繁地检查缓冲区状态
-                 } catch (e: Exception) {
-                     // println("持续播放错误: ${e.message}")
-                     break
-                 }
+                 tapAudioTrack?.write(toneData, 0, toneData.size, AudioTrack.WRITE_BLOCKING)
              }
         }
     }
@@ -190,9 +166,9 @@ class AudioTonePlayer(private val sampleRate: Int) {
         val elapsedTime = currentTime - playStartTime
         
         if (elapsedTime < minimumPlayTime && isTapPlaying) {
-            // 如果播放时间不足0.1秒，等待剩余时间
+            // 如果播放时间不足[minimumPlayTime]ms，等待剩余时间
             val remainingTime = minimumPlayTime - elapsedTime
-            // println("播放时间不足0.1秒，等待 ${remainingTime}ms")
+            // println("播放时间不足${minimumPlayTime}ms，等待 ${remainingTime}ms")
             Thread.sleep(remainingTime)
         }
         
@@ -268,7 +244,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
                         else -> continue
                     }
 
-                    // println("$char:$duration")
+//                    println("$char:$duration")
                     
                     if (char == '.' || char == '-') {
                         // 播放音调
@@ -278,6 +254,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
                         playSilence(duration)
                     }
                 }
+                playSilence(0.5)
                 // println("Stop！")
                 audioTrack?.stop()
                 audioTrack?.release()
