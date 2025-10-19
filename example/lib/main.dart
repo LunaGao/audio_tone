@@ -22,6 +22,12 @@ class _MyAppState extends State<MyApp> {
     super.initState();
   }
 
+  void playMorseCode() {
+    audioTone.playMorseCode(".-.-  .-.- .").then((_) {
+      log("end");
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -31,9 +37,8 @@ class _MyAppState extends State<MyApp> {
           children: [
             ListTile(
               title: const Text('Init Tone Player'),
-              onTap: () async {
-                await audioTone.playMorseCode(".-.-  .-.- .");
-                log("end");
+              onTap: () {
+                playMorseCode();
               },
             ),
             InkWell(

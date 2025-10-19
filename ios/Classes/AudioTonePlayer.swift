@@ -163,7 +163,7 @@ class AudioTonePlayer: NSObject {
         }
         
         let symbols = preprocessMorseCode(morseCode)
-        let playDuration = getPlayDuration(morseCode)
+        let playDuration = getPlayDuration(symbols)
         
         isPlaying = true
         // 准备并启动音频引擎
@@ -180,8 +180,6 @@ class AudioTonePlayer: NSObject {
         
         // 播放处理后的序列内容
         playSymbols(symbols, index: 0)
-        // 延迟时长，模拟同步播放
-        Thread.sleep(forTimeInterval: playDuration)
         return 0
     }
 
@@ -191,7 +189,7 @@ class AudioTonePlayer: NSObject {
     // 3. 单空格替换为o（one的首字母）
     // 4. 点和划之间增加i (interval的首字母)
     // 返回的内容中，包含：".", "-", "o", "t", "i"
-    private func preprocessMorseCode(_ morseCode: String) -> [String] {
+    private func preprocessMorseCode(_ morseCode: String) -> String {
         var processed = morseCode.trimmingCharacters(in: .whitespaces)
         
         // 连续双空格替换为t（tow的首字母）
@@ -213,28 +211,14 @@ class AudioTonePlayer: NSObject {
             processed.removeFirst()
         }
         
-        return processed.components(separatedBy: "")
+        return processed
     }
     
     // 递归播放符号序列
-    private func playSymbols(_ symbols: [String], index: Int) {
-        guard index < symbols.count, isPlaying else {
-            // 所有符号播放完毕
-            // print("播放完成")
-            isPlaying = false
-            
-            // 延迟停止，确保最后声音播放完毕
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                self?.stopMorseCode()
-            }
-            return
-        }
-        
-        let symbol = symbols[index]
-        // print("播放符号 \(index + 1)/\(symbols.count): '\(symbol)'")
-        
+    private func playSymbols(_ symbols: String, index: Int) {
         // 播放当前符号的所有点和划
-        playSymbolCharacters(Array(symbol), index: 0) { [weak self] in
+        playSymbolCharacters(Array(symbols), index: 0) { [weak self] in
+//            self?.stopMorseCode()
             self?.playFinishedNotify()
             // print("play finished")
         }
