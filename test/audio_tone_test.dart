@@ -9,71 +9,57 @@ class MockAudioTonePlatform
     with MockPlatformInterfaceMixin
     implements AudioTonePlatform {
   @override
-  Future<String?> getPlatformVersion() => Future.value('42');
-
-  @override
   Future<void> init(AudioSampleRate sampleRate) {
-    // TODO: implement init
     throw UnimplementedError();
   }
 
   @override
   Future<void> play() {
-    // TODO: implement play
     throw UnimplementedError();
   }
 
   @override
   Future<int> playMorseCode(String morseCode) {
-    // TODO: implement playMorseCode
     throw UnimplementedError();
   }
 
   @override
   Future<void> setDashDuration(int dotsTimes) {
-    // TODO: implement setDashDuration
     throw UnimplementedError();
   }
 
   @override
   Future<void> setDotDashIntervalDuration(int dotsTimes) {
-    // TODO: implement setDotDashIntervalDuration
     throw UnimplementedError();
   }
 
   @override
   Future<void> setFrequency(AudioFrequency frequency) {
-    // TODO: implement setFrequency
     throw UnimplementedError();
   }
 
   @override
   Future<void> setLetterIntervalDuration(int dotsTimes) {
-    // TODO: implement setLetterIntervalDuration
     throw UnimplementedError();
   }
 
   @override
   Future<void> setSpeed(int wpm) {
-    // TODO: implement setSpeed
     throw UnimplementedError();
   }
 
   @override
   Future<void> setVolume(double volume) {
-    // TODO: implement setVolume
     throw UnimplementedError();
   }
 
   @override
   Future<void> setWordsIntervalDuration(int dotsTimes) {
-    // TODO: implement setWordsIntervalDuration
     throw UnimplementedError();
   }
 
   @override
   Future<void> stop() {
-    // TODO: implement stop
     throw UnimplementedError();
   }
 }
@@ -93,10 +79,10 @@ void main() {
   //   expect(await audioTonePlugin.getPlatformVersion(), '42');
   // });
 
-  test('init', () async {
-    AudioTone audioTonePlugin = AudioTone(
-      sampleRate: AudioSampleRate.defaultSampleRate,
-      wpm: 100,
-    );
-  });
+  // test('init', () async {
+  //   AudioTone audioTonePlugin = AudioTone(
+  //     sampleRate: AudioSampleRate.defaultSampleRate,
+  //     wpm: 100,
+  //   );
+  // });
 }

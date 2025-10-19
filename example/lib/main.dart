@@ -1,6 +1,5 @@
 import 'dart:developer';
 
-import 'package:audio_tone/audio_frequency.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_tone/audio_tone.dart';
 
@@ -33,7 +32,8 @@ class _MyAppState extends State<MyApp> {
             ListTile(
               title: const Text('Init Tone Player'),
               onTap: () async {
-                audioTone.playMorseCode(".-.-  .-.- .");
+                await audioTone.playMorseCode(".-.-  .-.- .");
+                log("end");
               },
             ),
             InkWell(

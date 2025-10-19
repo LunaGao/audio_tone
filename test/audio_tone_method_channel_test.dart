@@ -1,11 +1,9 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:audio_tone/audio_tone_method_channel.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  MethodChannelAudioTone platform = MethodChannelAudioTone();
   const MethodChannel channel = MethodChannel('audio_tone');
 
   setUp(() {

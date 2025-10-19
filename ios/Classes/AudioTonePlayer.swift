@@ -163,6 +163,7 @@ class AudioTonePlayer: NSObject {
         }
         
         let symbols = preprocessMorseCode(morseCode)
+        let playDuration = getPlayDuration(morseCode)
         
         isPlaying = true
         // 准备并启动音频引擎
@@ -179,6 +180,8 @@ class AudioTonePlayer: NSObject {
         
         // 播放处理后的序列内容
         playSymbols(symbols, index: 0)
+        // 延迟时长，模拟同步播放
+        Thread.sleep(forTimeInterval: playDuration)
         return 0
     }
 
@@ -418,6 +421,33 @@ class AudioTonePlayer: NSObject {
     private func playWordsInterval() {
         let interval = generateSilence(duration: twoWhiteSpacesDuration)
         playerNode.scheduleBuffer(interval)
+    }
+
+    // MARK: - 获取播放时长
+
+    // 获取当前播放时长
+    func getPlayDuration(_ morseCode: String) -> Double {
+        var duration = Double(0);
+        // 遍历摩斯码中的每个字符
+        for char in morseCode {
+            if char == "." {
+                // 一个点
+                duration += self.dotDuration
+            } else if char == "-" {
+                // 一个划
+                duration += self.dashDuration
+            } else if char == "i" {
+                // 一个点和划之间的间隔
+                duration += self.dotDashDuration
+            } else if char == "o" {
+                // 一个字母之间的间隔
+                duration += self.oneWhiteSpaceDuration
+            } else if char == "t" {
+                // 一个单词之间的间隔
+                duration += self.twoWhiteSpacesDuration
+            }
+        }
+        return duration
     }
     
     // MARK: - 生成正弦波音频数据
