@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_tone/audio_frequency.dart';
 import 'package:audio_tone/audio_sample_rate.dart';
 import 'package:flutter/foundation.dart';
@@ -10,6 +12,11 @@ class MethodChannelAudioTone extends AudioTonePlatform {
   /// The method channel used to interact with the native platform.
   @visibleForTesting
   final methodChannel = const MethodChannel('audio_tone');
+
+  @visibleForTesting
+  final eventChannel = const EventChannel('audio_tone_event');
+
+  StreamSubscription<dynamic>? _streamSubscription;
 
   @override
   Future<void> init(AudioSampleRate sampleRate) async {
@@ -100,5 +107,20 @@ class MethodChannelAudioTone extends AudioTonePlatform {
   @override
   Future<void> stop() async {
     await methodChannel.invokeMethod<void>('stop');
+  }
+
+  /// 播放流
+  /// Play Stream
+  ///
+  /// [morseCode] Morse Code / 摩尔斯电码
+  /// [onComplete] 播放完成回调 / Playback complete callback
+  @override
+  StreamSubscription<dynamic> playStream(String morseCode) {
+    _streamSubscription?.cancel();
+    _streamSubscription = null;
+    _streamSubscription = eventChannel
+        .receiveBroadcastStream(morseCode)
+        .listen(null, cancelOnError: true);
+    return _streamSubscription!;
   }
 }

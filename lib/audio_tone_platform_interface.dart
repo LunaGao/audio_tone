@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_tone/audio_frequency.dart';
 import 'package:audio_tone/audio_sample_rate.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -93,5 +95,14 @@ abstract class AudioTonePlatform extends PlatformInterface {
   /// Stop
   Future<void> stop() {
     throw UnimplementedError('stop() has not been implemented.');
+  }
+
+  /// 播放流
+  /// Play Stream
+  ///
+  /// [morseCode] Morse Code / 摩尔斯电码
+  /// [onComplete] 播放完成回调 / Playback complete callback
+  StreamSubscription<dynamic> playStream(String morseCode) {
+    throw UnimplementedError('playStream() has not been implemented.');
   }
 }

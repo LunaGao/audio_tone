@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_tone/audio_frequency.dart';
 import 'package:audio_tone/audio_sample_rate.dart';
 
@@ -187,6 +189,15 @@ class AudioTone {
   /// "  "（两个空格） 表示单词间隔。
   Future<void> playMorseCode(String morseCode) async {
     await AudioTonePlatform.instance.playMorseCode(morseCode);
+  }
+
+  /// 播放流
+  /// Play Stream
+  ///
+  /// [morseCode] Morse Code / 摩尔斯电码
+  /// [onComplete] 播放完成回调 / Playback complete callback
+  StreamSubscription<dynamic> playStream(String morseCode) {
+    return AudioTonePlatform.instance.playStream(morseCode);
   }
 
   /// 播放

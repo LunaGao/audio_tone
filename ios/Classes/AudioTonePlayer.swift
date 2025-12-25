@@ -1,4 +1,5 @@
 import AVFoundation
+import Flutter
 
 class AudioTonePlayer: NSObject {
     // 音频配置
@@ -213,6 +214,8 @@ class AudioTonePlayer: NSObject {
         return processed
     }
     
+    // MARK: - 播放声音
+    
     // 递归播放符号序列
     private func playSymbols(_ symbols: String, index: Int) {
         // 播放当前符号的所有点和划
@@ -318,10 +321,89 @@ class AudioTonePlayer: NSObject {
         return tapPlayerNode.isPlaying && audioEngine.isRunning
     }
     
-    // 记录播放开始时间
-    private var playStartTime: TimeInterval = 0
+    // MARK: - 播放时间，仅按时间触发
+    
+    // 播放摩斯码，只接受".", "-", " "，这三种数据。
+    func playMorseCodeWithoutAudio(for morseCode: String, eventSink events: @escaping FlutterEventSink) -> Int {
+        guard !morseCode.isEmpty else {
+            // print("错误: 输入文本为空")
+            return 2
+        }
+        
+        // 检查输入是否只包含有效字符
+        guard morseCode.allSatisfy({ $0 == "." || $0 == "-" || $0 == " " }) else {
+            // print("错误: 输入包含无效字符")
+            return 3
+        }
+        
+        let symbols = preprocessMorseCode(morseCode)
+        
+        // 播放处理后的序列内容
+        playSymbolsTime(symbols, index: 0, eventSink: events)
+        return 0
+    }
+    
+    // 递归播放符号序列
+    private func playSymbolsTime(_ symbols: String, index: Int, eventSink events: @escaping FlutterEventSink) {
+        // 播放当前符号的所有点和划
+        playSymbolCharactersTime(Array(symbols), index: 0, eventSink: events) { [weak self] in
+//            self?.stopMorseCode()
+//            self?.playTimeFinishedNotify() // 播放结束后，需要停止这次的订阅
+            // print("play finished")
+        }
+    }
+    
+    // 递归播放单个符号的点和划
+    private func playSymbolCharactersTime(_ characters: [Character], index: Int, eventSink events: @escaping FlutterEventSink, completion: @escaping () -> Void) {
+        guard index < characters.count else {
+            completion()
+            return
+        }
+        
+        let char = characters[index]
+//        let isLast = index == characters.count - 1
+
+        var duration = Double(0);
+        if char == "." {
+            // 播放一个点
+            duration = self.dotDuration
+        } else if char == "-" {
+            // 播放一个划
+            duration = self.dashDuration
+        } else if char == "i" {
+            // 播放一个点和划之间的间隔
+            duration = self.dotDashDuration
+        } else if char == "o" {
+            // 播放一个字母之间的间隔
+            duration = self.oneWhiteSpaceDuration
+        } else if char == "t" {
+            // 播放一个单词之间的间隔
+            duration = self.twoWhiteSpacesDuration
+        }
+        
+        // 确定是点划，播放声音
+        if (char == ".") || (char == "-") {
+            // 播放一个点或划
+            DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+                events("light")
+                print("light")
+                self.playSymbolCharactersTime(characters, index: index + 1, eventSink: events, completion: completion)
+            }
+        } else {
+            // 其他则静音
+            DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+                events("dark")
+                print("dark")
+                self.playSymbolCharactersTime(characters, index: index + 1, eventSink: events, completion: completion)
+            }
+        }
+    }
+    
 
     // MARK: - 点按声音播放控制
+    
+    // 记录播放开始时间
+    private var playStartTime: TimeInterval = 0
 
     // 播放
     func playNow() {

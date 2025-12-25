@@ -33,6 +33,16 @@ class _MyAppState extends State<MyApp> {
     audioTone.playMorseCode("..-- --");
   }
 
+  void playStream() {
+    var s = audioTone.playStream("..-- --");
+    s.onData((event) {
+      log("$event ${DateTime.now()}");
+    });
+    s.onDone(() {
+      log("done");
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -55,6 +65,12 @@ class _MyAppState extends State<MyApp> {
               onTapUp: (details) {
                 log("E ${DateTime.now()}");
                 audioTone.stop();
+              },
+            ),
+            ListTile(
+              title: const Text('Test playStream'),
+              onTap: () async {
+                playStream();
               },
             ),
             ListTile(
