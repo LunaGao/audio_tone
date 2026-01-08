@@ -7,7 +7,7 @@ public class AudioTonePlugin: NSObject, FlutterStreamHandler, FlutterPlugin {
 
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "audio_tone", binaryMessenger: registrar.messenger())
-    let instance = AudioTonePlugin()
+    let instance: AudioTonePlugin = AudioTonePlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)
 
     let streamChannel = FlutterEventChannel(name: "audio_tone_event", binaryMessenger: registrar.messenger())

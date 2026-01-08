@@ -15,7 +15,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  var audioTone = AudioTone(wpm: 80);
+  var audioTone = AudioTone();
 
   @override
   void initState() {

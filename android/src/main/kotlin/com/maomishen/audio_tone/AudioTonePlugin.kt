@@ -5,11 +5,13 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.EventChannel
 
 /** AudioTonePlugin */
 class AudioTonePlugin :
     FlutterPlugin,
-    MethodCallHandler {
+    MethodCallHandler,
+    EventChannel.StreamHandler {
     
     // 音频播放器实例
     private var audioPlayer: AudioTonePlayer? = null
@@ -19,10 +21,14 @@ class AudioTonePlugin :
     // This local reference serves to register the plugin with the Flutter Engine and unregister it
     // when the Flutter Engine is detached from the Activity
     private lateinit var channel: MethodChannel
+    private lateinit var eventChannel: EventChannel
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "audio_tone")
         channel.setMethodCallHandler(this)
+
+        eventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "audio_tone_event")
+        eventChannel.setStreamHandler(this)
     }
 
     override fun onMethodCall(
@@ -116,5 +122,29 @@ class AudioTonePlugin :
         // 清理音频播放器资源
         audioPlayer?.cleanup()
         audioPlayer = null
+    }
+
+    // Declare our eventSink later it will be initialized
+    private var eventSink: EventChannel.EventSink? = null
+
+    override fun onListen(arguments: Any?, sink: EventChannel.EventSink) {
+        eventSink = sink
+
+        try {
+            val morseCode = arguments as? String
+            if (morseCode != null) {
+                val returnValue = audioPlayer?.playMorseCodeWithoutAudio(morseCode, eventSink)
+            } else {
+                sink.error("INVALID_ARGUMENTS", "Morse code must be provided", null)
+            }
+        } catch (e: Exception) {
+            sink.error("PLAYBACK_ERROR", "Failed to start morse code playback: ${e.message}", null)
+        }
+    }
+
+    override fun onCancel(arguments: Any?) {
+        eventSink = null
+        // 停止摩斯码播放
+        audioPlayer?.stopMorseCode()
     }
 }

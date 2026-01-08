@@ -5,12 +5,14 @@ import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import io.flutter.plugin.common.EventChannel
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import kotlin.math.sin
 import kotlin.math.PI
-import kotlin.math.max
-import kotlin.math.min
 
 class AudioTonePlayer(private val sampleRate: Int) {
     // 音频配置
@@ -197,6 +199,78 @@ class AudioTonePlayer(private val sampleRate: Int) {
         tapAudioTrack?.stop()
         tapAudioTrack?.release()
         tapAudioTrack = null
+    }
+
+    // MARK: - 播放时间，仅按时间触发
+
+    // 播放摩斯码，只接受".", "-", " "，这三种数据。
+    fun playMorseCodeWithoutAudio(morseCode: String, eventSink: EventChannel.EventSink?) : Int {
+        if (morseCode.isEmpty()) {
+            // print("错误: 输入文本为空")
+            return 2
+        }
+
+        // 检查输入是否只包含有效字符
+        if (!morseCode.all { it == '.' || it == '-' || it == ' ' }) {
+            // println("错误: 输入包含无效字符")
+            return 3
+        }
+
+        val symbols = preprocessMorseCode(morseCode)
+
+        // 播放处理后的序列内容
+        playSymbolsTime(symbols, eventSink)
+        return 0
+    }
+
+    // Handle event in main thread.
+    private var handler = Handler(Looper.getMainLooper())
+
+    // 递归播放符号序列
+    private fun playSymbolsTime(symbols: String, eventSink : EventChannel.EventSink?) {
+        executor.execute {
+            Log.i("AudioTonePlayer", "Starting playSymbolsTime with symbols: $symbols")
+            for (char in symbols) {
+                val duration = when (char) {
+                    '.' -> dotDuration
+                    '-' -> dashDuration
+                    'i' -> dotDashDuration
+                    'o' -> oneWhiteSpaceDuration
+                    't' -> twoWhiteSpacesDuration
+                    else -> continue
+                }
+
+                Log.i("AudioTonePlayer", "Processing char: $char, duration: $duration")
+
+                // 在主线程中分发事件
+                handler.post {
+                    try {
+                        Log.i("AudioTonePlayer", "Sending event for char: $char, eventSink: $eventSink")
+                        if (eventSink != null) {
+                            if (char == '.' || char == '-') {
+                                // 播放音调
+                                eventSink.success("light")
+                                Log.i("AudioTonePlayer", "Sent light event")
+                            } else {
+                                // 播放静音
+                                eventSink.success("dark")
+                                Log.i("AudioTonePlayer", "Sent dark event")
+                            }
+                        } else {
+                            Log.w("AudioTonePlayer", "EventSink is null, skipping event")
+                        }
+                    } catch (e: Exception) {
+                        Log.e("AudioTonePlayer", "Error sending event to EventChannel: ${e.message}", e)
+                    }
+                }
+                Log.i("AudioTonePlayer", (duration * 1000).toLong().toString())
+                Thread.sleep((duration * 1000).toLong()) // 将秒转化为毫秒
+            }
+            Log.i("AudioTonePlayer", "Completed playSymbolsTime")
+            handler.post {
+                eventSink?.endOfStream()
+            }
+        }
     }
     
     // MARK: - 私有方法
