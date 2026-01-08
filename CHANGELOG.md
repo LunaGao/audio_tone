@@ -1,3 +1,7 @@
+## 0.0.4
+
+* Add `playStream` method for playing Morse code callback to stream
+
 ## 0.0.3
 
 * Fixed Android audio playback issues in specific scenarios
