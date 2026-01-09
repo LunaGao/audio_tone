@@ -216,8 +216,8 @@ class AudioTonePlayer(private val sampleRate: Int) {
             return 3
         }
 
-        val symbols = preprocessMorseCode(morseCode)
-
+        val symbols = preprocessMorseCode(morseCode) + "i"
+        
         // 播放处理后的序列内容
         playSymbolsTime(symbols, eventSink)
         return 0

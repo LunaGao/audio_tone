@@ -1,5 +1,7 @@
-## 0.0.4
+## 0.0.5
+* Fix ios playStream issue
 
+## 0.0.4
 * Add `playStream` method for playing Morse code callback to stream
 
 ## 0.0.3

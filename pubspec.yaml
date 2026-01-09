@@ -1,6 +1,6 @@
 name: audio_tone
 description: "A professional Flutter plugin for audio tone generation and Morse code playback with comprehensive audio control features, frequency modulation, and precise timing control."
-version: 0.0.4
+version: 0.0.5 
 homepage: https://github.com/LunaGao/audio_tone
 
 environment:

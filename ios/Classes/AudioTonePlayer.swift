@@ -336,7 +336,7 @@ class AudioTonePlayer: NSObject {
             return 3
         }
         
-        let symbols = preprocessMorseCode(morseCode)
+        let symbols = preprocessMorseCode(morseCode) + "i"
         
         // 播放处理后的序列内容
         playSymbolsTime(symbols, index: 0, eventSink: events)
@@ -383,17 +383,17 @@ class AudioTonePlayer: NSObject {
         
         // 确定是点划，播放声音
         if (char == ".") || (char == "-") {
+            events("light")
+            print("light")
             // 播放一个点或划
-            DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
-                events("light")
-                print("light")
+            DispatchQueue.main.asyncAfter(deadline: .now() + duration * 10) {
                 self.playSymbolCharactersTime(characters, index: index + 1, eventSink: events, completion: completion)
             }
         } else {
+            events("dark")
+            print("dark")
             // 其他则静音
-            DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
-                events("dark")
-                print("dark")
+            DispatchQueue.main.asyncAfter(deadline: .now() + duration * 10) {
                 self.playSymbolCharactersTime(characters, index: index + 1, eventSink: events, completion: completion)
             }
         }
