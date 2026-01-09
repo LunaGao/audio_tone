@@ -50,6 +50,10 @@ public class AudioTonePlugin: NSObject, FlutterStreamHandler, FlutterPlugin {
       let volume = call.arguments as! Double
       audioTonePlayer?.setVolume(Float(volume))
       result(nil)
+    case "setLightFlashingMagnificationFactor":
+      let factor = call.arguments as! Double
+      audioTonePlayer?.setLightFlashingMagnificationFactor(factor)
+      result(nil)
     case "playMorseCode":
       let morseCode = call.arguments as! String
       result(audioTonePlayer?.playMorseCode(for: morseCode))

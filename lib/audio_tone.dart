@@ -48,6 +48,12 @@ class AudioTone {
   late double _volume;
   double get volume => _volume;
 
+  /// 灯光闪烁放大倍数
+  /// default value 5.0, range 1.0-100.0 / 默认5.0，范围1.0-100.0
+  late double _lightFlashingMagnificationFactor;
+  double get lightFlashingMagnificationFactor =>
+      _lightFlashingMagnificationFactor;
+
   AudioTone({
     AudioSampleRate sampleRate = AudioSampleRate.defaultSampleRate,
     AudioFrequency frequency = AudioFrequency.defaultFrequency,
@@ -57,6 +63,7 @@ class AudioTone {
     int letterIntervalDuration = 3,
     int wordsIntervalDuration = 7,
     double volume = 1.0,
+    double lightFlashingMagnificationFactor = 5.0,
   }) {
     AudioTonePlatform.instance.init(sampleRate);
     setFrequency(frequency);
@@ -66,6 +73,7 @@ class AudioTone {
     setLetterIntervalDuration(letterIntervalDuration);
     setWordsIntervalDuration(wordsIntervalDuration);
     setVolume(volume);
+    setLightFlashingMagnificationFactor(lightFlashingMagnificationFactor);
   }
 
   /// 设置音频频率
@@ -176,6 +184,23 @@ class AudioTone {
     }
     _volume = volume;
     AudioTonePlatform.instance.setVolume(volume);
+  }
+
+  /// 设置灯光闪烁放大倍数
+  /// Set Light Flashing Magnification Factor
+  /// default value 5.0, range 1.0-100.0 / 默认5.0，范围1.0-100.0
+  ///
+  /// [factor] Light Flashing Magnification Factor / 灯光闪烁 magnification factor
+  void setLightFlashingMagnificationFactor(double factor) {
+    if (factor < 1.0 || factor > 100.0) {
+      throw ArgumentError.value(
+        factor,
+        'factor',
+        'Light flashing magnification factor must be between 1.0 and 100.0',
+      );
+    }
+    _lightFlashingMagnificationFactor = factor;
+    AudioTonePlatform.instance.setLightFlashingMagnificationFactor(factor);
   }
 
   /// 播放摩尔斯电码

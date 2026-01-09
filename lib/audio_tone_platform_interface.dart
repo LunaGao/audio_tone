@@ -49,6 +49,12 @@ abstract class AudioTonePlatform extends PlatformInterface {
     );
   }
 
+  Future<void> setLightFlashingMagnificationFactor(double factor) {
+    throw UnimplementedError(
+      'setLightFlashingMagnificationFactor() has not been implemented.',
+    );
+  }
+
   /// 设置字母之间的间隔时长（点的倍数）
   /// Set Duration of a Letter Interval (Dot counts)
   /// default value 3 dots, range 1-5 dots / 默认3个点，范围1-5个点

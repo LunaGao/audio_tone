@@ -1,3 +1,7 @@
+## 0.0.6
+* Add `lightFlashingMagnificationFactor` parameter for light flashing magnification factor
+* Add `onDone` callback for when the Morse code playback is done
+
 ## 0.0.5
 * Fix ios playStream issue
 

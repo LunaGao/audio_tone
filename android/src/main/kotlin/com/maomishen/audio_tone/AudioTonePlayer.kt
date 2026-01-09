@@ -23,6 +23,9 @@ class AudioTonePlayer(private val sampleRate: Int) {
     private var dotDashIntervalDotTimes: Int = 1 // 点划之间的时长，点的倍数
     private var oneWhiteSpaceDotTimes: Int = 3 // 单空格的间隔，点的倍数（用于字母之间）
     private var twoWhiteSpacesDotTimes: Int = 7 // 双空格的间隔，点的倍数（用于单词之间）
+
+    // 灯光闪烁放大倍数
+    private var lightFlashingMagnificationFactor: Double = 5.0 // 灯光闪烁放大倍数，默认5.0，范围1.0-100.0
     
     // 点、划、点划之间、字母、单词之间的时长
     private var dotDuration: Double = 0.12 // 点的时长，秒（基础时长）
@@ -67,6 +70,11 @@ class AudioTonePlayer(private val sampleRate: Int) {
         this.volume = volume.toFloat()
         audioTrack?.setVolume(volume.toFloat())
         tapAudioTrack?.setVolume(volume.toFloat())
+    }
+    
+    // 设置灯光闪烁放大倍数
+    fun setLightFlashingMagnificationFactor(factor: Double) {
+        this.lightFlashingMagnificationFactor = factor
     }
     
     // MARK: - 时长设置
@@ -216,7 +224,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
             return 3
         }
 
-        val symbols = preprocessMorseCode(morseCode) + "i"
+        val symbols = preprocessMorseCode(morseCode) + "*"
         
         // 播放处理后的序列内容
         playSymbolsTime(symbols, eventSink)
@@ -231,14 +239,16 @@ class AudioTonePlayer(private val sampleRate: Int) {
         executor.execute {
             Log.i("AudioTonePlayer", "Starting playSymbolsTime with symbols: $symbols")
             for (char in symbols) {
-                val duration = when (char) {
+                var duration = when (char) {
                     '.' -> dotDuration
                     '-' -> dashDuration
                     'i' -> dotDashDuration
                     'o' -> oneWhiteSpaceDuration
                     't' -> twoWhiteSpacesDuration
+                    '*' -> 0 // 结束的时候使用这个符号来表示
                     else -> continue
                 }
+                duration = duration.toDouble() // 转化一下类型
 
                 Log.i("AudioTonePlayer", "Processing char: $char, duration: $duration")
 
@@ -263,8 +273,9 @@ class AudioTonePlayer(private val sampleRate: Int) {
                         Log.e("AudioTonePlayer", "Error sending event to EventChannel: ${e.message}", e)
                     }
                 }
-                Log.i("AudioTonePlayer", (duration * 1000).toLong().toString())
-                Thread.sleep((duration * 1000).toLong()) // 将秒转化为毫秒
+                val millis = duration * 1000 * lightFlashingMagnificationFactor;
+                Log.i("AudioTonePlayer", millis.toLong().toString())
+                Thread.sleep(millis.toLong()) // 将秒转化为毫秒
             }
             Log.i("AudioTonePlayer", "Completed playSymbolsTime")
             handler.post {

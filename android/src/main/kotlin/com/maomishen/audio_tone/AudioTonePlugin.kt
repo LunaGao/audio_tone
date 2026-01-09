@@ -59,6 +59,12 @@ class AudioTonePlugin :
                 audioPlayer?.setVolume(volume)
                 result.success(0)
             }
+
+            "setLightFlashingMagnificationFactor" -> {
+                val factor = call.arguments as Double
+                audioPlayer?.setLightFlashingMagnificationFactor(factor)
+                result.success(0)
+            }
             
             "setDashDuration" -> {
                 val dotTimes = call.arguments as Int

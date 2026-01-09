@@ -12,6 +12,9 @@ class AudioTonePlayer: NSObject {
     private var oneWhiteSpace_DotTimes: Int = 3 // 单空格的间隔，点的倍数 （用于字母之间）
     private var twoWhiteSpaces_DotTimes: Int = 7 // 双空格的间隔，点的倍数 （用于单词之间）
     
+    // 灯光闪烁放大倍数
+    private var lightFlashingMagnificationFactor: Double = 5.0 // 灯光闪烁放大倍数，默认5.0，范围1.0-100.0
+    
     // 点、划、点划之间、字母、单词之间的时长
     private var dotDuration: Double = 0.12 // 点的时长，秒（基础时长），使用setSpeed设置
     private var dashDuration: Double = 0.36 // 划的时长，秒
@@ -48,6 +51,11 @@ class AudioTonePlayer: NSObject {
         // 设置主混音器音量
         let mainMixer = audioEngine.mainMixerNode
         mainMixer.outputVolume = volume
+    }
+
+    // 设置灯光闪烁放大倍数
+    func setLightFlashingMagnificationFactor(_ factor: Double) {
+        self.lightFlashingMagnificationFactor = factor
     }
     
     // MARK: - 时长设置
@@ -355,13 +363,10 @@ class AudioTonePlayer: NSObject {
     
     // 递归播放单个符号的点和划
     private func playSymbolCharactersTime(_ characters: [Character], index: Int, eventSink events: @escaping FlutterEventSink, completion: @escaping () -> Void) {
-        guard index < characters.count else {
-            completion()
-            return
-        }
+        
         
         let char = characters[index]
-//        let isLast = index == characters.count - 1
+        let isLast = index == characters.count - 1
 
         var duration = Double(0);
         if char == "." {
@@ -385,15 +390,27 @@ class AudioTonePlayer: NSObject {
         if (char == ".") || (char == "-") {
             events("light")
             print("light")
+
+            guard index < characters.count - 1 else {
+                events(FlutterEndOfEventStream)
+                completion()
+                return
+            }
             // 播放一个点或划
-            DispatchQueue.main.asyncAfter(deadline: .now() + duration * 10) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + duration * lightFlashingMagnificationFactor) {
                 self.playSymbolCharactersTime(characters, index: index + 1, eventSink: events, completion: completion)
             }
         } else {
             events("dark")
             print("dark")
+
+            guard index < characters.count - 1 else {
+                events(FlutterEndOfEventStream)
+                completion()
+                return
+            }
             // 其他则静音
-            DispatchQueue.main.asyncAfter(deadline: .now() + duration * 10) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + duration * lightFlashingMagnificationFactor) {
                 self.playSymbolCharactersTime(characters, index: index + 1, eventSink: events, completion: completion)
             }
         }
