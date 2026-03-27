@@ -22,6 +22,28 @@
   位置：`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:173-183`、`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlugin.kt:109-111`  
   说明：`playStop()` 已改为发送停止请求，由音频写入线程在满足最小时长后自行收尾，不再阻塞平台调用线程。
 
+## iOS 性能优化
+
+- [ ] 复用 `AVAudioPCMBuffer`，避免在摩斯码播放热路径里重复生成 tone/silence 数据  
+  位置：`ios/Classes/AudioTonePlayer.swift:87-95`、`ios/Classes/AudioTonePlayer.swift:238-275`、`ios/Classes/AudioTonePlayer.swift:538-576`  
+  说明：当前每次符号播放都会重新创建 `AVAudioFormat`、`AVAudioPCMBuffer` 并逐采样计算正弦波；`upgradeDuration()` 也会重复生成持续音缓冲。建议按 `frameCount + frequency` 缓存 tone buffer，按 `frameCount` 缓存 silence buffer，并为持续音单独维护可复用缓冲，降低对象分配和波形重复计算成本。
+
+- [ ] 去掉 iOS `play()` / `stop()` 路径中的阻塞式 `Thread.sleep`  
+  位置：`ios/Classes/AudioTonePlayer.swift:426-463`  
+  说明：当前在 `playNow()` 启动引擎后固定 sleep 100ms，在 `playStop()` 为满足最短播放时长再次 sleep；这两段代码会直接阻塞平台调用线程，导致点击响应和 Flutter method channel 往返变慢。建议改为后台队列或异步停止收尾。
+
+- [ ] 复用 `AVAudioEngine` / `AVAudioSession` 生命周期，避免 stop 或重新 init 时频繁停启  
+  位置：`ios/Classes/AudioTonePlugin.swift:19-24`、`ios/Classes/AudioTonePlayer.swift:99-120`、`ios/Classes/AudioTonePlayer.swift:288-309`  
+  说明：当前 `init` 会重建 `AudioTonePlayer`，`stopMorseCode()` 会停止并 reset `audioEngine`，同时反复激活/取消激活 `AVAudioSession`。建议改成按需初始化并在日常停止时保留 engine/session 热状态，只在真正销毁时释放，减少首音延迟和系统音频资源抖动。
+
+- [ ] 精简 `playStream` 热路径中的主线程调度和日志输出  
+  位置：`ios/Classes/AudioTonePlayer.swift:365-415`、`ios/Classes/AudioTonePlugin.swift:80-107`  
+  说明：当前每个 light/dark 事件都会 `print`，并通过 `DispatchQueue.main.asyncAfter` 逐段递归调度；`onListen` / `onCancel` 也有无条件日志。建议移除热路径日志，改用串行后台队列或定时器驱动事件推进，只在必要时切回主线程派发事件。
+
+- [ ] 避免参数更新时重复向 `tapPlayerNode` 安排循环缓冲  
+  位置：`ios/Classes/AudioTonePlayer.swift:87-95`  
+  说明：`setSpeed`、`setDashDuration` 等都会触发 `upgradeDuration()`，而该方法每次都会重新 `scheduleBuffer(..., options: .loops)`。建议在持续音缓冲真正失效时才重建并重新排程，避免节点上重复挂载循环 buffer，减少潜在的调度堆积和状态异常风险。
+
 ## 本轮总结
 
 - 已完成 5 项 Android 侧性能优化，覆盖持续音播放、摩斯码音频生成、`AudioTrack` 生命周期、`playStream` 事件热路径，以及 `stop()` 的阻塞调用路径。
@@ -31,6 +53,7 @@
 - 当前代码状态：
   - Android 播放路径已从“频繁创建对象和阻塞停止”调整为“缓存复用、后台收尾、低频写入”。
   - `todo.md` 中原定的 Android 性能优化项已全部完成。
+  - iOS 侧已经补充出 5 项高优先级性能优化候选，主要集中在 buffer 缓存、停止路径去阻塞、`AVAudioEngine`/`AVAudioSession` 生命周期复用，以及 `playStream` 热路径瘦身。
 
 ## 后续观察项
 
