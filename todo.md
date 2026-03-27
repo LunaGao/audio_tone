@@ -21,3 +21,21 @@
 - [x] 去掉 `stop()` 路径中的阻塞式等待  
   位置：`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:173-183`、`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlugin.kt:109-111`  
   说明：`playStop()` 已改为发送停止请求，由音频写入线程在满足最小时长后自行收尾，不再阻塞平台调用线程。
+
+## 本轮总结
+
+- 已完成 5 项 Android 侧性能优化，覆盖持续音播放、摩斯码音频生成、`AudioTrack` 生命周期、`playStream` 事件热路径，以及 `stop()` 的阻塞调用路径。
+- 当前优化方向主要集中在减少高频 `AudioTrack.write()` 调用、降低 `FloatArray` 分配和正弦波重复计算、减少主线程事件切换，以及避免平台调用线程被 `sleep` 阻塞。
+- 已完成的验证：
+  - `android/./gradlew test`：通过
+- 当前代码状态：
+  - Android 播放路径已从“频繁创建对象和阻塞停止”调整为“缓存复用、后台收尾、低频写入”。
+  - `todo.md` 中原定的 Android 性能优化项已全部完成。
+
+## 后续观察项
+
+- 建议在真机上补做一次长按播放和长串摩斯码播放测试，重点观察：
+  - 首次发声延迟是否有变化
+  - 快速按下/抬起时是否仍满足预期最短播放时长
+  - 长串 `playStream` 是否存在事件节奏漂移
+- 如果后续还要继续优化，优先考虑补性能基准或埋点，而不是继续凭直觉改动底层播放逻辑。
