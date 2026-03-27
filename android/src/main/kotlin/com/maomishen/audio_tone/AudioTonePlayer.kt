@@ -46,6 +46,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
     private val executor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private var playStartTime: Long = 0
     private val minimumPlayTime: Long = 50 // 最小播放时间，毫秒
+    private val tapToneBufferDurationSeconds: Double = 0.2
     
     // 音频配置常量
     private val channelConfig = AudioFormat.CHANNEL_OUT_MONO
@@ -155,17 +156,30 @@ class AudioTonePlayer(private val sampleRate: Int) {
         // 创建音频轨道
         createTapAudioTrack()
         
-        // 生成持续音调（生成2秒的音频数据用于循环，减少拼接频率）
-        val toneData = generateToneData(0.01) // 2秒循环数据，减少缓冲区压力
+        // 生成较大的循环缓冲，降低 write 调用频率和线程唤醒次数。
+        val toneData = generateToneData(tapToneBufferDurationSeconds)
         
         // 开始播放
         tapAudioTrack?.play()
 
         // 循环写入数据以维持持续播放
         executor.execute {
-             while (isTapPlaying) {
-                 tapAudioTrack?.write(toneData, 0, toneData.size, AudioTrack.WRITE_BLOCKING)
-             }
+            try {
+                while (isTapPlaying) {
+                    val track = tapAudioTrack ?: break
+                    val written = track.write(
+                        toneData,
+                        0,
+                        toneData.size,
+                        AudioTrack.WRITE_BLOCKING
+                    )
+                    if (written <= 0) {
+                        break
+                    }
+                }
+            } catch (_: IllegalStateException) {
+                // Track may be stopped or released while the loop is unwinding.
+            }
         }
     }
     

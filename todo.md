@@ -2,9 +2,9 @@
 
 ## Android 性能优化
 
-- [ ] 优化持续音播放的缓冲策略  
+- [x] 优化持续音播放的缓冲策略  
   位置：`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:146-169`  
-  说明：当前 `playNow()` 只生成约 10ms 的音频数据并在循环中持续 `WRITE_BLOCKING`，写入频率过高，线程唤醒和 CPU 开销偏大。应改为更大的循环缓冲，或改成更低频率的写入策略。
+  说明：已将持续音循环缓冲从约 10ms 提升到 200ms，并在写入循环里增加失败退出保护，降低 `WRITE_BLOCKING` 调用频率和线程唤醒成本。
 
 - [ ] 减少摩斯码播放时的音频数组分配和正弦波重复计算  
   位置：`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:356-387`  
