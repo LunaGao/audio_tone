@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:audio_tone_example/main.dart';
+import 'package:audio_tone_example/src/audio_tone_demo_app.dart';
 
 void main() {
   testWidgets('renders interactive demo sections', (WidgetTester tester) async {
