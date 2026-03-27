@@ -9,10 +9,10 @@ enum AudioFrequency {
   /// 800 Hz
   frequency800(800),
 
-  /// 16000 Hz
+  /// 1000 Hz
   frequency1000(1000),
 
-  /// 22050 Hz
+  /// 1200 Hz
   frequency1200(1200);
 
   const AudioFrequency(this.value);

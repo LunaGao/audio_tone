@@ -80,12 +80,14 @@ final audioTone = AudioTone(
   letterIntervalDuration: 3, // 字母间隔（点的倍数）(1-5)
   wordsIntervalDuration: 7, // 单词间隔（点的倍数）(3-20)
   volume: 1.0, // 音量 (0.0-1.0)
+  lightFlashingMagnificationFactor: 5.0, // 灯光闪烁倍数 (1.0-100.0)
 );
 
 // 动态调整设置
-audioTone.setFrequency(AudioFrequency.frequency1000Hz);
+audioTone.setFrequency(AudioFrequency.frequency1000);
 audioTone.setSpeed(15); // 设置为15 WPM
 audioTone.setVolume(0.5); // 设置为50%音量
+audioTone.setLightFlashingMagnificationFactor(8.0);
 ```
 
 ## API参考 📚
@@ -104,6 +106,7 @@ audioTone.setVolume(0.5); // 设置为50%音量
 | `letterIntervalDuration` | int | `3` | 字母间隔（点的倍数）(1-5) |
 | `wordsIntervalDuration` | int | `7` | 单词间隔（点的倍数）(3-20) |
 | `volume` | double | `1.0` | 音量级别 (0.0-1.0) |
+| `lightFlashingMagnificationFactor` | double | `5.0` | 灯光闪烁倍数 (1.0-100.0) |
 
 #### 方法
 
@@ -114,7 +117,9 @@ audioTone.setVolume(0.5); // 设置为50%音量
 - `setLetterIntervalDuration(int dotsTimes)` - 设置字母间隔 (1-5 点)
 - `setWordsIntervalDuration(int dotsTimes)` - 设置单词间隔 (3-20 点)
 - `setVolume(double volume)` - 设置音量 (0.0-1.0)
+- `setLightFlashingMagnificationFactor(double factor)` - 设置灯光闪烁倍数 (1.0-100.0)
 - `playMorseCode(String morseCode)` - 播放摩斯电码字符串
+- `playStream(String morseCode)` - 以流的方式接收摩斯电码播放事件
 - `getMorseCodePlayDuration(String morseCode)` - 获取摩斯电码播放时长（秒）
 - `play()` - 开始音调播放
 - `stop()` - 停止音调播放
@@ -122,19 +127,25 @@ audioTone.setVolume(0.5); // 设置为50%音量
 ### AudioFrequency枚举
 
 - `defaultFrequency` (800Hz)
-- `frequency600Hz`
-- `frequency800Hz`
-- `frequency1000Hz`
-- `frequency1200Hz`
+- `frequency600`
+- `frequency800`
+- `frequency1000`
+- `frequency1200`
 
 ### AudioSampleRate枚举
 
 - `defaultSampleRate` (44100Hz)
-- `telephoneQuality` (8000Hz)
-- `speechRecording` (16000Hz)
+- `telephone` (8000Hz)
+- `lowQuality` (11025Hz)
+- `voice` (16000Hz)
+- `halfCD` (22050Hz)
+- `professional` (32000Hz)
 - `cdQuality` (44100Hz)
-- `dvdQuality` (48000Hz)
-- `studioQuality` (96000Hz)
+- `professionalVideo` (48000Hz)
+- `highQuality` (88200Hz)
+- `ultraHighQuality` (96000Hz)
+- `extremeQuality` (176400Hz)
+- `maximumQuality` (192000Hz)
 
 ## 完整示例 🎯
 
@@ -183,7 +194,7 @@ class _MyAppState extends State<MyApp> {
               title: const Text('设置参数'),
               subtitle: const Text('点击设置频率为1000Hz，速度为15 WPM'),
               onTap: () {
-                audioTone.setFrequency(AudioFrequency.frequency1000Hz);
+                audioTone.setFrequency(AudioFrequency.frequency1000);
                 audioTone.setSpeed(15);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('已设置：1000Hz, 15 WPM')),
@@ -202,8 +213,8 @@ class _MyAppState extends State<MyApp> {
 
 | 平台 | 版本 |
 |----------|---------|
-| Android | SDK 21+ |
-| iOS | 11.0+ |
+| Android | SDK 24+ |
+| iOS | 13.0+ |
 
 ## 开发说明 🔧
 

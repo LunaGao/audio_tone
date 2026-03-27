@@ -81,12 +81,14 @@ final audioTone = AudioTone(
   letterIntervalDuration: 3, // Letter interval (dot multiples) (1-5)
   wordsIntervalDuration: 7, // Word interval (dot multiples) (3-20)
   volume: 1.0, // Volume (0.0-1.0)
+  lightFlashingMagnificationFactor: 5.0, // Light flashing factor (1.0-100.0)
 );
 
 // Adjust settings dynamically
-audioTone.setFrequency(AudioFrequency.frequency1000Hz);
+audioTone.setFrequency(AudioFrequency.frequency1000);
 audioTone.setSpeed(15); // Set to 15 WPM
 audioTone.setVolume(0.5); // Set to 50% volume
+audioTone.setLightFlashingMagnificationFactor(8.0);
 ```
 
 ## API Reference 📚
@@ -105,6 +107,7 @@ audioTone.setVolume(0.5); // Set to 50% volume
 | `letterIntervalDuration` | int | `3` | Letter interval (dot multiples) (1-5) |
 | `wordsIntervalDuration` | int | `7` | Word interval (dot multiples) (3-20) |
 | `volume` | double | `1.0` | Volume level (0.0-1.0) |
+| `lightFlashingMagnificationFactor` | double | `5.0` | Light flashing factor (1.0-100.0) |
 
 #### Methods
 
@@ -115,7 +118,9 @@ audioTone.setVolume(0.5); // Set to 50% volume
 - `setLetterIntervalDuration(int dotsTimes)` - Set letter interval (1-5 dots)
 - `setWordsIntervalDuration(int dotsTimes)` - Set word interval (3-20 dots)
 - `setVolume(double volume)` - Set volume (0.0-1.0)
+- `setLightFlashingMagnificationFactor(double factor)` - Set light flashing factor (1.0-100.0)
 - `playMorseCode(String morseCode)` - Play Morse code string
+- `playStream(String morseCode)` - Stream Morse code playback events
 - `getMorseCodePlayDuration(String morseCode)` - Get Morse code playback duration in seconds
 - `play()` - Start tone playback
 - `stop()` - Stop tone playback
@@ -123,19 +128,25 @@ audioTone.setVolume(0.5); // Set to 50% volume
 ### AudioFrequency Enum
 
 - `defaultFrequency` (800Hz)
-- `frequency600Hz`
-- `frequency800Hz`
-- `frequency1000Hz`
-- `frequency1200Hz`
+- `frequency600`
+- `frequency800`
+- `frequency1000`
+- `frequency1200`
 
 ### AudioSampleRate Enum
 
 - `defaultSampleRate` (44100Hz)
-- `telephoneQuality` (8000Hz)
-- `speechRecording` (16000Hz)
+- `telephone` (8000Hz)
+- `lowQuality` (11025Hz)
+- `voice` (16000Hz)
+- `halfCD` (22050Hz)
+- `professional` (32000Hz)
 - `cdQuality` (44100Hz)
-- `dvdQuality` (48000Hz)
-- `studioQuality` (96000Hz)
+- `professionalVideo` (48000Hz)
+- `highQuality` (88200Hz)
+- `ultraHighQuality` (96000Hz)
+- `extremeQuality` (176400Hz)
+- `maximumQuality` (192000Hz)
 
 ## Complete Example 🎯
 
@@ -184,7 +195,7 @@ class _MyAppState extends State<MyApp> {
               title: const Text('Set Parameters'),
               subtitle: const Text('Tap to set frequency to 1000Hz, speed to 15 WPM'),
               onTap: () {
-                audioTone.setFrequency(AudioFrequency.frequency1000Hz);
+                audioTone.setFrequency(AudioFrequency.frequency1000);
                 audioTone.setSpeed(15);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Set: 1000Hz, 15 WPM')),
@@ -203,8 +214,8 @@ class _MyAppState extends State<MyApp> {
 
 | Platform | Version |
 |----------|---------|
-| Android | SDK 21+ |
-| iOS | 11.0+ |
+| Android | SDK 24+ |
+| iOS | 13.0+ |
 
 ## Development Notes 🔧
 
