@@ -1,8 +1,13 @@
 ## Unreleased
 
+## 0.0.7
+
 * Fix `AudioTone.sampleRate` state initialization.
+* Rebuild the example app into an interactive demo for Morse playback, stream events, hold-to-play tone testing, and live parameter tuning.
 * Update example widget tests to match the current example app UI.
 * Align Android plugin unit tests with the current method-channel behavior.
+* Improve Android playback performance by reusing `AudioTrack`, caching generated audio buffers, trimming stream event overhead, and making the stop path non-blocking.
+* Improve iOS playback performance by removing blocking stop waits, caching generated audio buffers, trimming stream event overhead, reusing `AVAudioEngine` and `AVAudioSession` lifecycles, and scheduling tap loop buffers on demand.
 * Sync README, README_CN, and iOS podspec metadata with the current API and package information.
 * Fix `AudioFrequency` enum comments for `frequency1000` and `frequency1200`.
 * Update Dart platform mocks to match the current platform interface.
