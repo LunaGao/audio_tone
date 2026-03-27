@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'audio_tone'
-  s.version          = '0.0.7'
+  s.version          = '0.0.8'
   s.summary          = 'Flutter audio tone and Morse code playback plugin.'
   s.description      = <<-DESC
 Audio tone generation and Morse code playback plugin for Flutter with

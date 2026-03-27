@@ -1,5 +1,9 @@
 ## Unreleased
 
+## 0.0.8
+
+* Fix Android plugin Gradle Flutter classpath fallback so standalone `android/` builds work without breaking host app integration.
+
 ## 0.0.7
 
 * Fix `AudioTone.sampleRate` state initialization.

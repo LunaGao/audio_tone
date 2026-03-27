@@ -25,7 +25,7 @@ Add dependency to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  audio_tone: ^0.0.7
+  audio_tone: ^0.0.8
 ```
 
 Then run:

@@ -24,7 +24,7 @@
 
 ```yaml
 dependencies:
-  audio_tone: ^0.0.7
+  audio_tone: ^0.0.8
 ```
 
 然后运行：
