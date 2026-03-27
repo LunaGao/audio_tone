@@ -1,6 +1,11 @@
 import AVFoundation
 import Flutter
 
+private struct ToneBufferKey: Hashable {
+    let frameCount: AVAudioFrameCount
+    let frequency: Int
+}
+
 class AudioTonePlayer: NSObject {
     // 音频配置
     private var sampleRate: Double = 44100 // 音频采样率，Hz
@@ -28,16 +33,20 @@ class AudioTonePlayer: NSObject {
     private let audioEngine = AVAudioEngine()
     private let playerNode = AVAudioPlayerNode()
     private let tapPlayerNode = AVAudioPlayerNode()
+    private var audioFormat: AVAudioFormat?
     private var isPlaying = false
     private var isTapPlaying = false // 专门跟踪 tapPlayerNode 的播放状态
     private var tapPlaybackSessionId: UInt64 = 0
     private var pendingTapStopWorkItem: DispatchWorkItem?
+    private var toneBufferCache: [ToneBufferKey: AVAudioPCMBuffer] = [:]
+    private var silenceBufferCache: [AVAudioFrameCount: AVAudioPCMBuffer] = [:]
     
     // MARK: - 音频基础设置
 
     // 设置频率
     func setFrequency(_ frequency: Int) {
         self.frequency = Double(frequency)
+        toneBufferCache.removeAll(keepingCapacity: true)
     }
 
     // 设置速度（每分钟单词数），主要设置的是点的时长，其他的都是根据点的时长计算出来的。
@@ -131,6 +140,8 @@ class AudioTonePlayer: NSObject {
         guard let audioFormat = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else {
             fatalError("无法创建音频格式")
         }
+
+        self.audioFormat = audioFormat
         
         audioEngine.connect(playerNode, to: mainMixer, format: audioFormat)
         audioEngine.connect(tapPlayerNode, to: mainMixer, format: audioFormat)
@@ -562,8 +573,16 @@ class AudioTonePlayer: NSObject {
     // 生成正弦波音频数据
     private func generateTone(duration: Double) -> AVAudioPCMBuffer {
         let frameCount = AVAudioFrameCount(duration * sampleRate)
-        
-        guard let audioFormat = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1),
+        let cacheKey = ToneBufferKey(
+            frameCount: frameCount,
+            frequency: Int(frequency.rounded())
+        )
+
+        if let cachedBuffer = toneBufferCache[cacheKey] {
+            return cachedBuffer
+        }
+
+        guard let audioFormat,
               let buffer = AVAudioPCMBuffer(pcmFormat: audioFormat, frameCapacity: frameCount) else {
             fatalError("无法创建音频缓冲区")
         }
@@ -575,8 +594,8 @@ class AudioTonePlayer: NSObject {
             let time = Double(frame) / sampleRate
             floatBuffer[frame] = Float(sin(2 * Double.pi * frequency * time))
         }
-        
-        // print("生成音调: \(duration)秒, 频率: \(frequency)Hz, 采样数: \(frameCount)")
+
+        toneBufferCache[cacheKey] = buffer
         return buffer
     }
     
@@ -584,8 +603,12 @@ class AudioTonePlayer: NSObject {
     // 生成静音音频数据
     private func generateSilence(duration: Double) -> AVAudioPCMBuffer {
         let frameCount = AVAudioFrameCount(duration * sampleRate)
-        
-        guard let audioFormat = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1),
+
+        if let cachedBuffer = silenceBufferCache[frameCount] {
+            return cachedBuffer
+        }
+
+        guard let audioFormat,
               let buffer = AVAudioPCMBuffer(pcmFormat: audioFormat, frameCapacity: frameCount) else {
             fatalError("无法创建静音缓冲区")
         }
@@ -596,8 +619,8 @@ class AudioTonePlayer: NSObject {
         for frame in 0..<Int(frameCount) {
             floatBuffer[frame] = 0.0
         }
-        
-        // print("生成静音: \(duration)秒, 采样数: \(frameCount)")
+
+        silenceBufferCache[frameCount] = buffer
         return buffer
     }
 

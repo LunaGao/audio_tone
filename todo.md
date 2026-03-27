@@ -24,9 +24,9 @@
 
 ## iOS 性能优化
 
-- [ ] 复用 `AVAudioPCMBuffer`，避免在摩斯码播放热路径里重复生成 tone/silence 数据  
-  位置：`ios/Classes/AudioTonePlayer.swift:87-95`、`ios/Classes/AudioTonePlayer.swift:238-275`、`ios/Classes/AudioTonePlayer.swift:538-576`  
-  说明：当前每次符号播放都会重新创建 `AVAudioFormat`、`AVAudioPCMBuffer` 并逐采样计算正弦波；`upgradeDuration()` 也会重复生成持续音缓冲。建议按 `frameCount + frequency` 缓存 tone buffer，按 `frameCount` 缓存 silence buffer，并为持续音单独维护可复用缓冲，降低对象分配和波形重复计算成本。
+- [x] 复用 `AVAudioPCMBuffer`，避免在摩斯码播放热路径里重复生成 tone/silence 数据  
+  位置：`ios/Classes/AudioTonePlayer.swift:4-42`、`ios/Classes/AudioTonePlayer.swift:140-147`、`ios/Classes/AudioTonePlayer.swift:574-623`  
+  说明：已引入 `ToneBufferKey`、共享 `audioFormat`、tone/silence buffer 缓存；摩斯码和持续音路径现在会优先复用已生成的 `AVAudioPCMBuffer`，不再在每个符号播放时重复创建格式对象和逐采样计算波形。
 
 - [x] 去掉 iOS `play()` / `stop()` 路径中的阻塞式 `Thread.sleep`  
   位置：`ios/Classes/AudioTonePlayer.swift:422-496`  
@@ -54,7 +54,7 @@
 - 当前代码状态：
   - Android 播放路径已从“频繁创建对象和阻塞停止”调整为“缓存复用、后台收尾、低频写入”。
   - `todo.md` 中原定的 Android 性能优化项已全部完成。
-  - iOS 侧已完成“停止路径去阻塞”这一项，剩余优化主要集中在 buffer 缓存、`AVAudioEngine`/`AVAudioSession` 生命周期复用，以及 `playStream` 热路径瘦身。
+  - iOS 侧已完成“停止路径去阻塞”和“buffer 缓存复用”两项，剩余优化主要集中在 `AVAudioEngine`/`AVAudioSession` 生命周期复用、`playStream` 热路径瘦身，以及 tap 循环缓冲的重复排程控制。
 
 ## 后续观察项
 
