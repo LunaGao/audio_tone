@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_tone/audio_frequency.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:audio_tone/audio_tone.dart';
@@ -34,6 +36,11 @@ class MockAudioTonePlatform
   }
 
   @override
+  Future<void> setLightFlashingMagnificationFactor(double factor) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<void> setFrequency(AudioFrequency frequency) {
     throw UnimplementedError();
   }
@@ -60,6 +67,11 @@ class MockAudioTonePlatform
 
   @override
   Future<void> stop() {
+    throw UnimplementedError();
+  }
+
+  @override
+  StreamSubscription<dynamic> playStream(String morseCode) {
     throw UnimplementedError();
   }
 

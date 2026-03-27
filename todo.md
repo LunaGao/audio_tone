@@ -47,7 +47,7 @@
 
 ### 新发现问题
 
-- [ ] 更新 `test/audio_tone_test.dart` 中的 mock 实现  
+- [x] 更新 `test/audio_tone_test.dart` 中的 mock 实现  
   位置：`test/audio_tone_test.dart`、`lib/audio_tone_platform_interface.dart`  
   说明：平台接口新增了 `setLightFlashingMagnificationFactor` 和 `playStream`，但测试里的 `MockAudioTonePlatform` 没有补实现；当前 `fvm flutter test`（根包）会失败。
 
@@ -69,3 +69,4 @@
 - [x] 修复 example 测试模板残留问题
 - [x] 修复 Android 原生单测模板残留问题
 - [x] 同步 podspec、README/README_CN、平台版本说明和枚举注释
+- [x] 修复根包测试 mock 与平台接口不一致的问题
