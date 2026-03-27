@@ -5,23 +5,18 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:audio_tone_example/main.dart';
 
 void main() {
-  testWidgets('Verify Platform version', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('renders example actions', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
 
-    // Verify that platform version is retrieved.
-    expect(
-      find.byWidgetPredicate(
-        (Widget widget) => widget is Text &&
-                           widget.data!.startsWith('Running on:'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Plugin example app'), findsOneWidget);
+    expect(find.text('Init Tone Player'), findsOneWidget);
+    expect(find.text('Tap to Play'), findsOneWidget);
+    expect(find.text('Test playStream'), findsOneWidget);
+    expect(find.text('Test getMorseCodePlayDuration'), findsOneWidget);
   });
 }

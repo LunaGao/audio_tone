@@ -19,7 +19,7 @@
 
 ### P1
 
-- [ ] 修复 example 测试仍然使用脚手架默认断言  
+- [x] 修复 example 测试仍然使用脚手架默认断言  
   位置：`example/test/widget_test.dart:14-25`、`example/lib/main.dart:38-68`  
   说明：测试期待页面存在 `Running on:` 文本，但当前示例页根本没有该文案；实测 `fvm flutter test`（example）失败。
 
@@ -56,3 +56,4 @@
 
 - [x] 新增 `todo.md`，记录本次项目检查结果
 - [x] 修复 `AudioTone.sampleRate` 未初始化问题
+- [x] 修复 example 测试模板残留问题
