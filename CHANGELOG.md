@@ -1,32 +1,45 @@
+## Unreleased
+
+* Fix `AudioTone.sampleRate` state initialization.
+* Update example widget tests to match the current example app UI.
+* Align Android plugin unit tests with the current method-channel behavior.
+* Sync README, README_CN, and iOS podspec metadata with the current API and package information.
+* Fix `AudioFrequency` enum comments for `frequency1000` and `frequency1200`.
+* Update Dart platform mocks to match the current platform interface.
+* Add Flutter Android classpath wiring so standalone Android Gradle tests can run from `android/`.
+* Upgrade the project FVM Flutter version to `3.41.4`.
+
 ## 0.0.6
-* Add `lightFlashingMagnificationFactor` parameter for light flashing magnification factor
-* Add `onDone` callback for when the Morse code playback is done
+
+* Add `lightFlashingMagnificationFactor` for light flashing control.
+* Add `onDone` callback support for Morse code playback completion.
 
 ## 0.0.5
-* Fix ios playStream issue
+
+* Fix iOS `playStream` issue.
 
 ## 0.0.4
-* Add `playStream` method for playing Morse code callback to stream
+
+* Add `playStream` for streaming Morse code playback callbacks.
 
 ## 0.0.3
 
-* Fixed Android audio playback issues in specific scenarios
-* Enhanced tap-to-play functionality and user experience
-* Improved audio playback reliability on Android devices
+* Fix Android audio playback issues in specific scenarios.
+* Enhance tap-to-play functionality and user experience.
+* Improve audio playback reliability on Android devices.
 
 ## 0.0.2
 
-* Added `getMorseCodePlayDuration` method for calculating Morse code playback duration
-* Fixed iOS platform code implementation errors
-* Improved audio playback performance and stability
+* Add `getMorseCodePlayDuration` for calculating Morse code playback duration.
+* Fix iOS platform implementation errors.
+* Improve audio playback performance and stability.
 
 ## 0.0.1
 
-* Commented out all print statements in native iOS and Android code
-* Improved description field in pubspec.yaml with professional English description
-* Added complete English README documentation
-* Renamed original Chinese README to README_CN.md
-* Initial release
-* Support for audio tone generation and Morse code playback
-* Complete Flutter plugin functionality
-* Support for both iOS and Android platforms
+* Initial release.
+* Support audio tone generation and Morse code playback.
+* Provide Flutter plugin implementations for both iOS and Android.
+* Comment out native debug print statements.
+* Improve the `pubspec.yaml` description.
+* Add complete English README documentation.
+* Rename the original Chinese README to `README_CN.md`.
