@@ -3,6 +3,7 @@
 ![Static Badge](https://img.shields.io/badge/bless-Cats-green)
 ![Static Badge](https://img.shields.io/badge/AI-doubao-pink)
 ![Static Badge](https://img.shields.io/badge/AI-TRAE-pink)
+![Static Badge](https://img.shields.io/badge/AI-Codex-pink)
 ![Pub Version](https://img.shields.io/pub/v/audio_tone)
 ![Flutter Platform](https://img.shields.io/badge/platform-Flutter-blue)
 
