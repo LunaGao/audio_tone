@@ -23,7 +23,7 @@
   位置：`example/test/widget_test.dart:14-25`、`example/lib/main.dart:38-68`  
   说明：测试期待页面存在 `Running on:` 文本，但当前示例页根本没有该文案；实测 `fvm flutter test`（example）失败。
 
-- [ ] 更新 Android 原生单测，移除无效的 `getPlatformVersion` 断言  
+- [x] 更新 Android 原生单测，移除无效的 `getPlatformVersion` 断言  
   位置：`android/src/test/kotlin/com/maomishen/audio_tone/AudioTonePluginTest.kt:18-25`  
   说明：插件当前没有 `getPlatformVersion` 方法，这个测试属于模板残留，和现有实现不一致。
 
@@ -57,3 +57,4 @@
 - [x] 新增 `todo.md`，记录本次项目检查结果
 - [x] 修复 `AudioTone.sampleRate` 未初始化问题
 - [x] 修复 example 测试模板残留问题
+- [x] 修复 Android 原生单测模板残留问题
