@@ -45,10 +45,16 @@ class AudioTonePlayer(private val sampleRate: Int) {
     private var audioTrack: AudioTrack? = null
     private var tapAudioTrack: AudioTrack? = null
     private var isPlaying = false
+    @Volatile
     private var isTapPlaying = false // 专门跟踪 tapPlayerNode 的播放状态
+    @Volatile
+    private var tapStopRequested = false
+    @Volatile
+    private var tapPlaybackSessionId: Long = 0
     
     // 线程池
     private val executor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+    @Volatile
     private var playStartTime: Long = 0
     private val minimumPlayTime: Long = 50 // 最小播放时间，毫秒
     private val tapToneBufferDurationSeconds: Double = 0.2
@@ -158,8 +164,10 @@ class AudioTonePlayer(private val sampleRate: Int) {
             stopTapPlaying()
         }
         
+        val playbackSessionId = ++tapPlaybackSessionId
         playStartTime = System.currentTimeMillis()
         isTapPlaying = true
+        tapStopRequested = false
         
         // 创建或复用音频轨道
         ensureTapAudioTrack()
@@ -173,7 +181,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
         // 循环写入数据以维持持续播放
         executor.execute {
             try {
-                while (isTapPlaying) {
+                while (isTapPlaying && tapPlaybackSessionId == playbackSessionId) {
                     val track = tapAudioTrack ?: break
                     val written = track.write(
                         toneData,
@@ -184,27 +192,31 @@ class AudioTonePlayer(private val sampleRate: Int) {
                     if (written <= 0) {
                         break
                     }
+                    if (tapStopRequested &&
+                        System.currentTimeMillis() - playStartTime >= minimumPlayTime) {
+                        isTapPlaying = false
+                    }
                 }
             } catch (_: IllegalStateException) {
                 // Track may be stopped or released while the loop is unwinding.
+            } finally {
+                if (tapPlaybackSessionId == playbackSessionId) {
+                    finishTapPlayback()
+                }
             }
         }
     }
     
     // 停止播放
     fun playStop() {
-        // 检查是否满足最少播放时间要求
-        val currentTime = System.currentTimeMillis()
-        val elapsedTime = currentTime - playStartTime
-        
-        if (elapsedTime < minimumPlayTime && isTapPlaying) {
-            // 如果播放时间不足[minimumPlayTime]ms，等待剩余时间
-            val remainingTime = minimumPlayTime - elapsedTime
-            // println("播放时间不足${minimumPlayTime}ms，等待 ${remainingTime}ms")
-            Thread.sleep(remainingTime)
+        if (!isTapPlaying) {
+            return
         }
-        
-        stopTapPlaying()
+
+        tapStopRequested = true
+        if (System.currentTimeMillis() - playStartTime >= minimumPlayTime) {
+            isTapPlaying = false
+        }
     }
     
     // 停止摩斯码播放
@@ -218,9 +230,17 @@ class AudioTonePlayer(private val sampleRate: Int) {
     
     // 停止tap播放
     private fun stopTapPlaying() {
+        tapPlaybackSessionId++
         isTapPlaying = false
+        tapStopRequested = false
         playStartTime = 0
+        resetTrack(tapAudioTrack)
+    }
 
+    private fun finishTapPlayback() {
+        isTapPlaying = false
+        tapStopRequested = false
+        playStartTime = 0
         resetTrack(tapAudioTrack)
     }
 

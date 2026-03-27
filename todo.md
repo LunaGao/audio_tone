@@ -18,6 +18,6 @@
   位置：`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:238-283`  
   说明：已移除 `playStream` 热路径中的高频日志，只在存在实际事件时才切主线程派发，并跳过结束符的无意义事件，减少主线程切换和日志 I/O。
 
-- [ ] 去掉 `stop()` 路径中的阻塞式等待  
+- [x] 去掉 `stop()` 路径中的阻塞式等待  
   位置：`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:173-183`、`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlugin.kt:109-111`  
-  说明：当前为满足最短播放时长，在 `playStop()` 里直接 `Thread.sleep()`。这会阻塞平台调用线程，影响停止响应。应把最小时长控制移到播放器工作线程内处理。
+  说明：`playStop()` 已改为发送停止请求，由音频写入线程在满足最小时长后自行收尾，不再阻塞平台调用线程。
