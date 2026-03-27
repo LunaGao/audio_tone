@@ -18,10 +18,13 @@ public class AudioTonePlugin: NSObject, FlutterStreamHandler, FlutterPlugin {
     switch call.method {
     case "init":
       let sampleRate = call.arguments as! Int
-      if audioTonePlayer != nil {
-        audioTonePlayer = nil
+      if let audioTonePlayer, audioTonePlayer.matchesSampleRate(Double(sampleRate)) {
+        result(nil)
+        return
       }
+      audioTonePlayer?.cleanup()
       audioTonePlayer = AudioTonePlayer(sampleRate: Double(sampleRate))
+      result(nil)
     case "setFrequency":
       let frequency = call.arguments as! Int
       audioTonePlayer?.setFrequency(frequency)

@@ -42,6 +42,9 @@ class AudioTonePlayer: NSObject {
     private var silenceBufferCache: [AVAudioFrameCount: AVAudioPCMBuffer] = [:]
     private let streamEventQueue = DispatchQueue(label: "com.maomishen.audio_tone.stream-events")
     private var streamPlaybackSessionId: UInt64 = 0
+    private var audioSessionConfigured = false
+    private var audioSessionActive = false
+    private var tapToneNeedsScheduling = true
     
     // MARK: - 音频基础设置
 
@@ -102,10 +105,7 @@ class AudioTonePlayer: NSObject {
         self.dotDashDuration = Double(self.dotDashInterval_DotTimes) * self.dotDuration
         self.oneWhiteSpaceDuration = Double(self.oneWhiteSpace_DotTimes) * self.dotDuration
         self.twoWhiteSpacesDuration = Double(self.twoWhiteSpaces_DotTimes) * self.dotDuration
-        
-        // 为 tapPlayerNode 安排持续的音频缓冲区
-        let continuousTone = generateTone(duration: 1) // 1秒的长音，循环播放
-        tapPlayerNode.scheduleBuffer(continuousTone, at: nil, options: .loops, completionHandler: nil)
+        tapToneNeedsScheduling = true
     }
     
     // MARK: - 生命周期方法 初始化和销毁
@@ -116,20 +116,45 @@ class AudioTonePlayer: NSObject {
         setupAudioEngine()
     }
 
+    func matchesSampleRate(_ sampleRate: Double) -> Bool {
+        self.sampleRate == sampleRate
+    }
+
     // 配置音频会话
     private func setupAudioSession() {
+        guard !audioSessionConfigured else {
+            return
+        }
+
         do {
             let audioSession = AVAudioSession.sharedInstance()
             
             // 设置音频会话类别为播放
             try audioSession.setCategory(.playback, mode: .default, options: [])
-            
-            // 激活音频会话
-            try audioSession.setActive(true)
-            
-            // print("音频会话配置成功")
+            audioSessionConfigured = true
         } catch {
             // print("音频会话配置失败: \(error.localizedDescription)")
+        }
+    }
+
+    private func ensureAudioSessionActive() throws {
+        setupAudioSession()
+        if !audioSessionActive {
+            try AVAudioSession.sharedInstance().setActive(true)
+            audioSessionActive = true
+        }
+    }
+
+    private func deactivateAudioSession() {
+        guard audioSessionActive else {
+            return
+        }
+
+        do {
+            try AVAudioSession.sharedInstance().setActive(false)
+            audioSessionActive = false
+        } catch {
+            // print("取消音频会话激活失败: \(error.localizedDescription)")
         }
     }
     
@@ -154,10 +179,7 @@ class AudioTonePlayer: NSObject {
     
     // 结束
     deinit {
-        stopMorseCode() // 停止播放摩斯码
-        tapPlayerNode.stop()
-        tapPlayerNode.reset()
-        // print("AudioTonePlayer 已释放")
+        cleanup()
     }
     
     // MARK: - 播放/停止 摩斯码
@@ -298,27 +320,13 @@ class AudioTonePlayer: NSObject {
     // 停止播放
     func stopMorseCode() {
         isPlaying = false
+        cancelStreamPlayback()
         stopTapPlayback(playbackSessionId: nil)
         
         if playerNode.isPlaying {
             playerNode.stop()
         }
-        
-        tapPlayerNode.stop()
-        tapPlayerNode.reset()
-        
-        if audioEngine.isRunning {
-            audioEngine.stop()
-            audioEngine.reset()
-        }
-        
-        // 取消激活音频会话
-        do {
-            try AVAudioSession.sharedInstance().setActive(false)
-            // print("音频会话已取消激活")
-        } catch {
-            // print("取消音频会话激活失败: \(error.localizedDescription)")
-        }
+        playerNode.reset()
     }
 
     // 打印当前时间（精确到纳秒）
@@ -473,10 +481,28 @@ class AudioTonePlayer: NSObject {
     private var playStartTime: TimeInterval = 0
 
     private func ensureAudioEngineRunning() throws {
+        try ensureAudioSessionActive()
         if !audioEngine.isRunning {
             audioEngine.prepare()
             try audioEngine.start()
         }
+    }
+
+    private func ensureTapToneScheduled() {
+        guard tapToneNeedsScheduling else {
+            return
+        }
+
+        tapPlayerNode.stop()
+        tapPlayerNode.reset()
+        let continuousTone = generateTone(duration: 1)
+        tapPlayerNode.scheduleBuffer(
+            continuousTone,
+            at: nil,
+            options: .loops,
+            completionHandler: nil
+        )
+        tapToneNeedsScheduling = false
     }
 
     private func cancelPendingTapStop() {
@@ -514,6 +540,8 @@ class AudioTonePlayer: NSObject {
             isTapPlaying = false
             return
         }
+
+        ensureTapToneScheduled()
         
         tapPlaybackSessionId += 1
         isTapPlaying = true
@@ -550,6 +578,29 @@ class AudioTonePlayer: NSObject {
         }
 
         stopTapPlayback(playbackSessionId: playbackSessionId)
+    }
+
+    func cleanup() {
+        cancelStreamPlayback()
+        isPlaying = false
+        stopTapPlayback(playbackSessionId: nil)
+
+        if playerNode.isPlaying {
+            playerNode.stop()
+        }
+        playerNode.reset()
+
+        tapPlayerNode.stop()
+        tapPlayerNode.reset()
+        tapToneNeedsScheduling = true
+
+        if audioEngine.isRunning {
+            audioEngine.stop()
+            audioEngine.reset()
+            audioEngine.prepare()
+        }
+
+        deactivateAudioSession()
     }
 
     // MARK: - 给播放摩斯码增加音频流

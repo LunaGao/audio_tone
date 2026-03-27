@@ -32,17 +32,17 @@
   位置：`ios/Classes/AudioTonePlayer.swift:422-496`  
   说明：已移除 `playNow()` / `playStop()` 中的阻塞式等待，改为通过 `pendingTapStopWorkItem` 和 `tapPlaybackSessionId` 实现可取消的异步停止；新的播放会话会主动取消旧的延迟 stop，避免平台调用线程被 `sleep` 阻塞。
 
-- [ ] 复用 `AVAudioEngine` / `AVAudioSession` 生命周期，避免 stop 或重新 init 时频繁停启  
-  位置：`ios/Classes/AudioTonePlugin.swift:19-24`、`ios/Classes/AudioTonePlayer.swift:99-120`、`ios/Classes/AudioTonePlayer.swift:288-309`  
-  说明：当前 `init` 会重建 `AudioTonePlayer`，`stopMorseCode()` 会停止并 reset `audioEngine`，同时反复激活/取消激活 `AVAudioSession`。建议改成按需初始化并在日常停止时保留 engine/session 热状态，只在真正销毁时释放，减少首音延迟和系统音频资源抖动。
+- [x] 复用 `AVAudioEngine` / `AVAudioSession` 生命周期，避免 stop 或重新 init 时频繁停启  
+  位置：`ios/Classes/AudioTonePlugin.swift:18-27`、`ios/Classes/AudioTonePlayer.swift:45-47`、`ios/Classes/AudioTonePlayer.swift:112-182`、`ios/Classes/AudioTonePlayer.swift:320-329`、`ios/Classes/AudioTonePlayer.swift:583-603`  
+  说明：已为 iOS 侧增加 session 配置/激活状态管理，并将资源释放收敛到 `cleanup()`；同采样率重复 `init` 会直接复用现有 player，普通 `stopMorseCode()` 不再停止 `AVAudioEngine` 或取消激活 `AVAudioSession`，只在真正销毁时释放。
 
 - [x] 精简 `playStream` 热路径中的主线程调度和日志输出  
   位置：`ios/Classes/AudioTonePlayer.swift:339-463`、`ios/Classes/AudioTonePlugin.swift:75-91`  
   说明：已移除 `playStream` 热路径和 `onListen` / `onCancel` 的无条件日志，引入串行 `streamEventQueue` 与 `streamPlaybackSessionId` 管理事件推进和取消；事件节奏调度不再依赖主线程，只在最终派发 `eventSink` 时回到主线程。
 
-- [ ] 避免参数更新时重复向 `tapPlayerNode` 安排循环缓冲  
-  位置：`ios/Classes/AudioTonePlayer.swift:87-95`  
-  说明：`setSpeed`、`setDashDuration` 等都会触发 `upgradeDuration()`，而该方法每次都会重新 `scheduleBuffer(..., options: .loops)`。建议在持续音缓冲真正失效时才重建并重新排程，避免节点上重复挂载循环 buffer，减少潜在的调度堆积和状态异常风险。
+- [x] 避免参数更新时重复向 `tapPlayerNode` 安排循环缓冲  
+  位置：`ios/Classes/AudioTonePlayer.swift:102-108`、`ios/Classes/AudioTonePlayer.swift:491-505`、`ios/Classes/AudioTonePlayer.swift:544-551`  
+  说明：`upgradeDuration()` 现在只标记 `tapToneNeedsScheduling`，不再立刻重复 `scheduleBuffer(..., .loops)`；持续音缓冲改为在 `playNow()` 之前按需重建并重新排程，避免节点上累积循环 buffer。
 
 ## 本轮总结
 
@@ -54,7 +54,7 @@
 - 当前代码状态：
   - Android 播放路径已从“频繁创建对象和阻塞停止”调整为“缓存复用、后台收尾、低频写入”。
   - `todo.md` 中原定的 Android 性能优化项已全部完成。
-  - iOS 侧已完成“停止路径去阻塞”“buffer 缓存复用”“playStream 热路径瘦身”三项，剩余优化主要集中在 `AVAudioEngine`/`AVAudioSession` 生命周期复用，以及 tap 循环缓冲的重复排程控制。
+  - iOS 侧列出的 5 项性能优化已全部完成，覆盖停止路径去阻塞、buffer 缓存复用、`playStream` 热路径瘦身、`AVAudioEngine`/`AVAudioSession` 生命周期复用，以及 tap 循环缓冲按需排程。
 
 ## 后续观察项
 
