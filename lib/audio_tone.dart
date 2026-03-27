@@ -65,6 +65,7 @@ class AudioTone {
     double volume = 1.0,
     double lightFlashingMagnificationFactor = 5.0,
   }) {
+    _sampleRate = sampleRate;
     AudioTonePlatform.instance.init(sampleRate);
     setFrequency(frequency);
     setSpeed(wpm);
