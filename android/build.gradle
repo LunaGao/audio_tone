@@ -1,19 +1,64 @@
 group = "com.maomishen.audio_tone"
 version = "1.0-SNAPSHOT"
 
-def flutterSdkPath = new File(rootProject.projectDir.parentFile, ".fvm/flutter_sdk")
-def flutterJarCandidates = [
-    new File(flutterSdkPath, "bin/cache/artifacts/engine/android-arm64/flutter.jar"),
-    new File(flutterSdkPath, "bin/cache/artifacts/engine/android-arm/flutter.jar"),
-    new File(flutterSdkPath, "bin/cache/artifacts/engine/android-x64/flutter.jar"),
-    new File(flutterSdkPath, "bin/cache/artifacts/engine/android-x86/flutter.jar"),
-]
-def flutterJar = flutterJarCandidates.find { it.exists() }
+def loadProperties = { File propertiesFile ->
+    def properties = new Properties()
+    if (propertiesFile.exists()) {
+        propertiesFile.withInputStream { properties.load(it) }
+    }
+    properties
+}
 
-if (flutterJar == null) {
-    throw new GradleException(
-        "Flutter Android artifacts not found under ${flutterSdkPath}. Run `fvm flutter precache --android` first."
-    )
+def resolveStandaloneFlutterSdkDir = {
+    def localProperties = loadProperties(file("local.properties"))
+    def candidatePaths = [
+        localProperties.getProperty("flutter.sdk"),
+        findProperty("flutter.sdk"),
+        findProperty("flutter-root"),
+        System.getenv("FLUTTER_ROOT"),
+        System.getenv("FLUTTER_HOME"),
+        new File(projectDir.parentFile, ".fvm/flutter_sdk").absolutePath,
+    ]
+
+    candidatePaths
+        .findAll { it != null && !it.toString().trim().isEmpty() }
+        .collect { file(it.toString()) }
+        .find { it.exists() }
+}
+
+def resolveStandaloneFlutterJar = {
+    def flutterSdkDir = resolveStandaloneFlutterSdkDir()
+    if (flutterSdkDir == null) {
+        return null
+    }
+
+    def engineDir = new File(flutterSdkDir, "bin/cache/artifacts/engine")
+    def flutterJarCandidates = [
+        "android-arm64/flutter.jar",
+        "android-arm/flutter.jar",
+        "android-x64/flutter.jar",
+        "android-x86/flutter.jar",
+        "android-arm64-release/flutter.jar",
+        "android-arm-release/flutter.jar",
+        "android-x64-release/flutter.jar",
+        "android-arm64-profile/flutter.jar",
+        "android-arm-profile/flutter.jar",
+        "android-x64-profile/flutter.jar",
+    ].collect { new File(engineDir, it) }
+
+    flutterJarCandidates.find { it.exists() }
+}
+
+def standaloneFlutterJar = null
+if (project == rootProject) {
+    standaloneFlutterJar = resolveStandaloneFlutterJar()
+    if (standaloneFlutterJar == null) {
+        throw new GradleException(
+            "Standalone Android Gradle builds require Flutter Android artifacts. " +
+            "Set `flutter.sdk` in ${file('local.properties')} or export FLUTTER_ROOT, " +
+            "then run `flutter precache --android`."
+        )
+    }
 }
 
 buildscript {
@@ -81,6 +126,8 @@ android {
 }
 
 dependencies {
-    compileOnly files(flutterJar)
-    testImplementation files(flutterJar)
+    if (standaloneFlutterJar != null) {
+        compileOnly files(standaloneFlutterJar)
+        testImplementation files(standaloneFlutterJar)
+    }
 }
