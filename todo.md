@@ -10,9 +10,9 @@
   位置：`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:356-387`  
   说明：已为 tone/silence 数据增加缓存，按 `frameCount` 和 `frequency` 复用已生成的 `FloatArray`，减少摩斯码播放和持续音播放中的对象分配与波形重复计算。
 
-- [ ] 复用 `AudioTrack`，避免频繁创建和释放  
+- [x] 复用 `AudioTrack`，避免频繁创建和释放  
   位置：`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:155-169`、`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:317-346`、`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:188-209`  
-  说明：当前点击播放和摩斯码播放都会重复创建/释放 `AudioTrack`。这会增加 native 资源抖动和启动延迟，适合改成按模式复用、仅在 `cleanup()` 或参数不兼容时重建。
+  说明：已改为按需创建并复用 `audioTrack` / `tapAudioTrack`，日常停止只做重置，`cleanup()` 才真正释放，减少了频繁创建/释放带来的 native 资源抖动。
 
 - [ ] 精简 `playStream` 热路径中的日志和主线程事件派发  
   位置：`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:238-283`  

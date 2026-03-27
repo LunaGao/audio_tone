@@ -162,8 +162,8 @@ class AudioTonePlayer(private val sampleRate: Int) {
         playStartTime = System.currentTimeMillis()
         isTapPlaying = true
         
-        // 创建音频轨道
-        createTapAudioTrack()
+        // 创建或复用音频轨道
+        ensureTapAudioTrack()
         
         // 生成较大的循环缓冲，降低 write 调用频率和线程唤醒次数。
         val toneData = generateToneData(tapToneBufferDurationSeconds)
@@ -212,24 +212,17 @@ class AudioTonePlayer(private val sampleRate: Int) {
     fun stopMorseCode() {
         isPlaying = false
         isTapPlaying = false
-        
-        audioTrack?.stop()
-        audioTrack?.release()
-        audioTrack = null
-        
-        tapAudioTrack?.stop()
-        tapAudioTrack?.release()
-        tapAudioTrack = null
+
+        resetTrack(audioTrack)
+        resetTrack(tapAudioTrack)
     }
     
     // 停止tap播放
     private fun stopTapPlaying() {
         isTapPlaying = false
         playStartTime = 0
-        
-        tapAudioTrack?.stop()
-        tapAudioTrack?.release()
-        tapAudioTrack = null
+
+        resetTrack(tapAudioTrack)
     }
 
     // MARK: - 播放时间，仅按时间触发
@@ -337,7 +330,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
     private fun playSymbols(symbols: String) {        
         executor.execute {
             try {
-                createAudioTrack()
+                ensureAudioTrack()
                 // 先启动播放，然后立即预填充
                 audioTrack?.play()
                 for (char in symbols) {
@@ -364,9 +357,7 @@ class AudioTonePlayer(private val sampleRate: Int) {
                 }
                 playSilence(0.5)
                 // println("Stop！")
-                audioTrack?.stop()
-                audioTrack?.release()
-                audioTrack = null
+                resetTrack(audioTrack)
                 isPlaying = false
                 
             } catch (e: Exception) {
@@ -416,10 +407,14 @@ class AudioTonePlayer(private val sampleRate: Int) {
         }
     }
     
-    // 创建音频轨道
-    private fun createAudioTrack() {
+    // 创建或复用音频轨道
+    private fun ensureAudioTrack() {
+        if (audioTrack?.state == AudioTrack.STATE_INITIALIZED) {
+            return
+        }
+
         val bufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat)
-        // 16048
+        releaseTrack(audioTrack)
         audioTrack = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             AudioTrack.Builder()
                 .setAudioAttributes(
@@ -453,10 +448,14 @@ class AudioTonePlayer(private val sampleRate: Int) {
         audioTrack?.setVolume(volume)
     }
     
-    // 创建持续音调音频轨道
-    private fun createTapAudioTrack() {
-        val bufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+    // 创建或复用持续音调音频轨道
+    private fun ensureTapAudioTrack() {
+        if (tapAudioTrack?.state == AudioTrack.STATE_INITIALIZED) {
+            return
+        }
 
+        val bufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+        releaseTrack(tapAudioTrack)
         tapAudioTrack = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             AudioTrack.Builder()
                 .setAudioAttributes(
@@ -489,10 +488,46 @@ class AudioTonePlayer(private val sampleRate: Int) {
         
         tapAudioTrack?.setVolume(volume)
     }
+
+    private fun resetTrack(track: AudioTrack?) {
+        if (track == null || track.state != AudioTrack.STATE_INITIALIZED) {
+            return
+        }
+
+        try {
+            if (track.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                track.pause()
+            }
+            track.flush()
+        } catch (_: IllegalStateException) {
+        }
+    }
+
+    private fun releaseTrack(track: AudioTrack?) {
+        if (track == null) {
+            return
+        }
+
+        try {
+            if (track.state == AudioTrack.STATE_INITIALIZED) {
+                if (track.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                    track.pause()
+                }
+                track.flush()
+            }
+        } catch (_: IllegalStateException) {
+        } finally {
+            track.release()
+        }
+    }
     
     // 清理资源
     fun cleanup() {
         stopMorseCode()
+        releaseTrack(audioTrack)
+        releaseTrack(tapAudioTrack)
+        audioTrack = null
+        tapAudioTrack = null
         executor.shutdown()
     }
     
