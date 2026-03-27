@@ -30,6 +30,8 @@ class AudioTonePlayer: NSObject {
     private let tapPlayerNode = AVAudioPlayerNode()
     private var isPlaying = false
     private var isTapPlaying = false // 专门跟踪 tapPlayerNode 的播放状态
+    private var tapPlaybackSessionId: UInt64 = 0
+    private var pendingTapStopWorkItem: DispatchWorkItem?
     
     // MARK: - 音频基础设置
 
@@ -132,6 +134,7 @@ class AudioTonePlayer: NSObject {
         
         audioEngine.connect(playerNode, to: mainMixer, format: audioFormat)
         audioEngine.connect(tapPlayerNode, to: mainMixer, format: audioFormat)
+        audioEngine.prepare()
         
         // print("音频引擎配置完成")
     }
@@ -139,7 +142,6 @@ class AudioTonePlayer: NSObject {
     // 结束
     deinit {
         stopMorseCode() // 停止播放摩斯码
-        playStop() // 停止按键播放
         tapPlayerNode.stop()
         tapPlayerNode.reset()
         // print("AudioTonePlayer 已释放")
@@ -156,8 +158,7 @@ class AudioTonePlayer: NSObject {
         
         // 如果 tapPlayerNode 正在播放，先停止它
         if isTapPlaying {
-            tapPlayerNode.pause()
-            isTapPlaying = false
+            stopTapPlayback(playbackSessionId: nil)
         }
         
         guard !morseCode.isEmpty else {
@@ -176,10 +177,7 @@ class AudioTonePlayer: NSObject {
         isPlaying = true
         // 准备并启动音频引擎
         do {
-            if !audioEngine.isRunning {
-                try audioEngine.start()
-                // print("音频引擎启动成功")
-            }
+            try ensureAudioEngineRunning()
         } catch {
             // print("音频引擎启动失败: \(error.localizedDescription)")
             isPlaying = false
@@ -287,16 +285,14 @@ class AudioTonePlayer: NSObject {
     // 停止播放
     func stopMorseCode() {
         isPlaying = false
-        isTapPlaying = false
+        stopTapPlayback(playbackSessionId: nil)
         
         if playerNode.isPlaying {
             playerNode.stop()
         }
         
-        if tapPlayerNode.isPlaying {
-            tapPlayerNode.stop()
-            tapPlayerNode.reset()
-        }
+        tapPlayerNode.stop()
+        tapPlayerNode.reset()
         
         if audioEngine.isRunning {
             audioEngine.stop()
@@ -422,23 +418,52 @@ class AudioTonePlayer: NSObject {
     // 记录播放开始时间
     private var playStartTime: TimeInterval = 0
 
+    private func ensureAudioEngineRunning() throws {
+        if !audioEngine.isRunning {
+            audioEngine.prepare()
+            try audioEngine.start()
+        }
+    }
+
+    private func cancelPendingTapStop() {
+        pendingTapStopWorkItem?.cancel()
+        pendingTapStopWorkItem = nil
+    }
+
+    private func stopTapPlayback(playbackSessionId: UInt64?) {
+        if let playbackSessionId, playbackSessionId != tapPlaybackSessionId {
+            return
+        }
+
+        cancelPendingTapStop()
+
+        if tapPlayerNode.isPlaying {
+            tapPlayerNode.pause()
+        }
+
+        isTapPlaying = false
+        playStartTime = 0
+    }
+
     // 播放
     func playNow() {
-        isTapPlaying = true
+        cancelPendingTapStop()
+        if isTapPlaying {
+            stopTapPlayback(playbackSessionId: nil)
+        }
+
         // 确保音频引擎正在运行
         do {
-            if !audioEngine.isRunning {
-                try audioEngine.start()
-                // print("音频引擎启动成功")
-                // 音频引擎启动后需要一点时间来稳定
-                Thread.sleep(forTimeInterval: 0.1)
-            }
+            try ensureAudioEngineRunning()
         } catch {
             // print("音频引擎启动失败: \(error.localizedDescription)")
             isTapPlaying = false
             return
         }
         
+        tapPlaybackSessionId += 1
+        isTapPlaying = true
+
         // 开始一直播放，直到调用pause()
         tapPlayerNode.play()
         playStartTime = CACurrentMediaTime()
@@ -449,28 +474,28 @@ class AudioTonePlayer: NSObject {
     let minimumPlayTime: TimeInterval = 0.05
 
     func playStop() {
-        // 打印当前时间（精确到纳秒）
-        // displayTime("停止播放1")
+        guard isTapPlaying else {
+            return
+        }
+
+        let playbackSessionId = tapPlaybackSessionId
         
         // 检查是否满足最少播放时间要求
         let currentTime = CACurrentMediaTime()
         let elapsedTime = currentTime - playStartTime
         
-        if elapsedTime < minimumPlayTime && tapPlayerNode.isPlaying {
-            // 如果播放时间不足【minimumPlayTime】秒，等待剩余时间
+        if elapsedTime < minimumPlayTime {
             let remainingTime = minimumPlayTime - elapsedTime
-            // print("播放时间不足\(minimumPlayTime)秒，等待 \(remainingTime) 秒")
-            Thread.sleep(forTimeInterval: remainingTime)
+            let workItem = DispatchWorkItem { [weak self] in
+                self?.stopTapPlayback(playbackSessionId: playbackSessionId)
+            }
+            cancelPendingTapStop()
+            pendingTapStopWorkItem = workItem
+            DispatchQueue.main.asyncAfter(deadline: .now() + remainingTime, execute: workItem)
+            return
         }
-        
-        // 停止播放节点
-        if tapPlayerNode.isPlaying {
-            // 这里使用暂停，因为不重新实例化tapPlayerNode
-            tapPlayerNode.pause()
-        }
-        
-        // 重置播放开始时间
-        playStartTime = 0
+
+        stopTapPlayback(playbackSessionId: playbackSessionId)
     }
 
     // MARK: - 给播放摩斯码增加音频流

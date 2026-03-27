@@ -28,9 +28,9 @@
   位置：`ios/Classes/AudioTonePlayer.swift:87-95`、`ios/Classes/AudioTonePlayer.swift:238-275`、`ios/Classes/AudioTonePlayer.swift:538-576`  
   说明：当前每次符号播放都会重新创建 `AVAudioFormat`、`AVAudioPCMBuffer` 并逐采样计算正弦波；`upgradeDuration()` 也会重复生成持续音缓冲。建议按 `frameCount + frequency` 缓存 tone buffer，按 `frameCount` 缓存 silence buffer，并为持续音单独维护可复用缓冲，降低对象分配和波形重复计算成本。
 
-- [ ] 去掉 iOS `play()` / `stop()` 路径中的阻塞式 `Thread.sleep`  
-  位置：`ios/Classes/AudioTonePlayer.swift:426-463`  
-  说明：当前在 `playNow()` 启动引擎后固定 sleep 100ms，在 `playStop()` 为满足最短播放时长再次 sleep；这两段代码会直接阻塞平台调用线程，导致点击响应和 Flutter method channel 往返变慢。建议改为后台队列或异步停止收尾。
+- [x] 去掉 iOS `play()` / `stop()` 路径中的阻塞式 `Thread.sleep`  
+  位置：`ios/Classes/AudioTonePlayer.swift:422-496`  
+  说明：已移除 `playNow()` / `playStop()` 中的阻塞式等待，改为通过 `pendingTapStopWorkItem` 和 `tapPlaybackSessionId` 实现可取消的异步停止；新的播放会话会主动取消旧的延迟 stop，避免平台调用线程被 `sleep` 阻塞。
 
 - [ ] 复用 `AVAudioEngine` / `AVAudioSession` 生命周期，避免 stop 或重新 init 时频繁停启  
   位置：`ios/Classes/AudioTonePlugin.swift:19-24`、`ios/Classes/AudioTonePlayer.swift:99-120`、`ios/Classes/AudioTonePlayer.swift:288-309`  
@@ -50,10 +50,11 @@
 - 当前优化方向主要集中在减少高频 `AudioTrack.write()` 调用、降低 `FloatArray` 分配和正弦波重复计算、减少主线程事件切换，以及避免平台调用线程被 `sleep` 阻塞。
 - 已完成的验证：
   - `android/./gradlew test`：通过
+  - iOS 原生逻辑已完成本地静态检查与代码路径复核，但当前环境下 `xcodebuild` 无法连接 `CoreSimulatorService`，未能完成自动化编译验证
 - 当前代码状态：
   - Android 播放路径已从“频繁创建对象和阻塞停止”调整为“缓存复用、后台收尾、低频写入”。
   - `todo.md` 中原定的 Android 性能优化项已全部完成。
-  - iOS 侧已经补充出 5 项高优先级性能优化候选，主要集中在 buffer 缓存、停止路径去阻塞、`AVAudioEngine`/`AVAudioSession` 生命周期复用，以及 `playStream` 热路径瘦身。
+  - iOS 侧已完成“停止路径去阻塞”这一项，剩余优化主要集中在 buffer 缓存、`AVAudioEngine`/`AVAudioSession` 生命周期复用，以及 `playStream` 热路径瘦身。
 
 ## 后续观察项
 
