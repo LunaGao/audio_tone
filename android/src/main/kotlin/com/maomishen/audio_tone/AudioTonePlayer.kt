@@ -7,7 +7,6 @@ import android.media.AudioTrack
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import io.flutter.plugin.common.EventChannel
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -248,52 +247,40 @@ class AudioTonePlayer(private val sampleRate: Int) {
     }
 
     // Handle event in main thread.
-    private var handler = Handler(Looper.getMainLooper())
+    private val handler = Handler(Looper.getMainLooper())
 
     // 递归播放符号序列
     private fun playSymbolsTime(symbols: String, eventSink : EventChannel.EventSink?) {
         executor.execute {
-            Log.i("AudioTonePlayer", "Starting playSymbolsTime with symbols: $symbols")
             for (char in symbols) {
-                var duration = when (char) {
+                val duration = when (char) {
                     '.' -> dotDuration
                     '-' -> dashDuration
                     'i' -> dotDashDuration
                     'o' -> oneWhiteSpaceDuration
                     't' -> twoWhiteSpacesDuration
-                    '*' -> 0 // 结束的时候使用这个符号来表示
+                    '*' -> 0.0 // 结束的时候使用这个符号来表示
                     else -> continue
                 }
-                duration = duration.toDouble() // 转化一下类型
 
-                Log.i("AudioTonePlayer", "Processing char: $char, duration: $duration")
+                val event = when (char) {
+                    '.', '-' -> "light"
+                    'i', 'o', 't' -> "dark"
+                    else -> null
+                }
 
-                // 在主线程中分发事件
-                handler.post {
-                    try {
-                        Log.i("AudioTonePlayer", "Sending event for char: $char, eventSink: $eventSink")
-                        if (eventSink != null) {
-                            if (char == '.' || char == '-') {
-                                // 播放音调
-                                eventSink.success("light")
-                                Log.i("AudioTonePlayer", "Sent light event")
-                            } else {
-                                // 播放静音
-                                eventSink.success("dark")
-                                Log.i("AudioTonePlayer", "Sent dark event")
-                            }
-                        } else {
-                            Log.w("AudioTonePlayer", "EventSink is null, skipping event")
+                if (event != null && eventSink != null) {
+                    handler.post {
+                        try {
+                            eventSink.success(event)
+                        } catch (_: Exception) {
                         }
-                    } catch (e: Exception) {
-                        Log.e("AudioTonePlayer", "Error sending event to EventChannel: ${e.message}", e)
                     }
                 }
-                val millis = duration * 1000 * lightFlashingMagnificationFactor;
-                Log.i("AudioTonePlayer", millis.toLong().toString())
+
+                val millis = duration * 1000 * lightFlashingMagnificationFactor
                 Thread.sleep(millis.toLong()) // 将秒转化为毫秒
             }
-            Log.i("AudioTonePlayer", "Completed playSymbolsTime")
             handler.post {
                 eventSink?.endOfStream()
             }

@@ -14,9 +14,9 @@
   位置：`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:155-169`、`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:317-346`、`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:188-209`  
   说明：已改为按需创建并复用 `audioTrack` / `tapAudioTrack`，日常停止只做重置，`cleanup()` 才真正释放，减少了频繁创建/释放带来的 native 资源抖动。
 
-- [ ] 精简 `playStream` 热路径中的日志和主线程事件派发  
+- [x] 精简 `playStream` 热路径中的日志和主线程事件派发  
   位置：`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:238-283`  
-  说明：当前每个符号都会打印多条 `Log.i`，并 `handler.post` 一次到主线程派发事件。长串摩斯码时会放大主线程切换成本，建议移除热路径日志，并评估是否可以合并事件派发。
+  说明：已移除 `playStream` 热路径中的高频日志，只在存在实际事件时才切主线程派发，并跳过结束符的无意义事件，减少主线程切换和日志 I/O。
 
 - [ ] 去掉 `stop()` 路径中的阻塞式等待  
   位置：`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:173-183`、`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlugin.kt:109-111`  
