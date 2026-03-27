@@ -9,12 +9,18 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import io.flutter.plugin.common.EventChannel
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import kotlin.math.sin
 import kotlin.math.PI
 
 class AudioTonePlayer(private val sampleRate: Int) {
+    private data class ToneCacheKey(
+        val frameCount: Int,
+        val frequencyHz: Int
+    )
+
     // 音频配置
     private var frequency: Double = 800.0 // 蜂鸣频率，Hz
     
@@ -51,12 +57,15 @@ class AudioTonePlayer(private val sampleRate: Int) {
     // 音频配置常量
     private val channelConfig = AudioFormat.CHANNEL_OUT_MONO
     private val audioFormat = AudioFormat.ENCODING_PCM_FLOAT
+    private val toneDataCache = ConcurrentHashMap<ToneCacheKey, FloatArray>()
+    private val silenceDataCache = ConcurrentHashMap<Int, FloatArray>()
 
     // MARK: - 音频基础设置
     
     // 设置频率
     fun setFrequency(frequency: Int) {
         this.frequency = frequency.toDouble()
+        toneDataCache.clear()
     }
     
     // 设置速度（每分钟单词数）
@@ -384,21 +393,27 @@ class AudioTonePlayer(private val sampleRate: Int) {
     // 生成音调数据
     private fun generateToneData(duration: Double): FloatArray {
         val frameCount = (duration * sampleRate).toInt()
-        val data = FloatArray(frameCount)
-        
-        for (i in 0 until frameCount) {
-            val time = i.toDouble() / sampleRate.toDouble()
-            data[i] = sin(2 * PI * frequency * time).toFloat()
+        val cacheKey = ToneCacheKey(
+            frameCount = frameCount,
+            frequencyHz = frequency.toInt()
+        )
+
+        return toneDataCache.getOrPut(cacheKey) {
+            val data = FloatArray(frameCount)
+            for (i in 0 until frameCount) {
+                val time = i.toDouble() / sampleRate.toDouble()
+                data[i] = sin(2 * PI * frequency * time).toFloat()
+            }
+            data
         }
-        
-        // println("生成音调: ${duration}秒, 频率: ${frequency}Hz, 采样数: ${frameCount}")
-        return data
     }
     
     // 生成静音数据
     private fun generateSilenceData(duration: Double): FloatArray {
         val frameCount = (duration * sampleRate).toInt()
-        return FloatArray(frameCount) // 默认值为0.0
+        return silenceDataCache.getOrPut(frameCount) {
+            FloatArray(frameCount)
+        }
     }
     
     // 创建音频轨道

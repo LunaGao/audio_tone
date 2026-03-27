@@ -6,9 +6,9 @@
   位置：`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:146-169`  
   说明：已将持续音循环缓冲从约 10ms 提升到 200ms，并在写入循环里增加失败退出保护，降低 `WRITE_BLOCKING` 调用频率和线程唤醒成本。
 
-- [ ] 减少摩斯码播放时的音频数组分配和正弦波重复计算  
+- [x] 减少摩斯码播放时的音频数组分配和正弦波重复计算  
   位置：`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:356-387`  
-  说明：点、划、静音每次播放都会新建 `FloatArray` 并重新生成波形；长串播放时会产生较多对象分配和 GC 压力。可考虑缓存常用片段，或实现相位连续的音频生成器。
+  说明：已为 tone/silence 数据增加缓存，按 `frameCount` 和 `frequency` 复用已生成的 `FloatArray`，减少摩斯码播放和持续音播放中的对象分配与波形重复计算。
 
 - [ ] 复用 `AudioTrack`，避免频繁创建和释放  
   位置：`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:155-169`、`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:317-346`、`android/src/main/kotlin/com/maomishen/audio_tone/AudioTonePlayer.kt:188-209`  
