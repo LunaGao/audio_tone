@@ -51,7 +51,7 @@
   位置：`test/audio_tone_test.dart`、`lib/audio_tone_platform_interface.dart`  
   说明：平台接口新增了 `setLightFlashingMagnificationFactor` 和 `playStream`，但测试里的 `MockAudioTonePlatform` 没有补实现；当前 `fvm flutter test`（根包）会失败。
 
-- [ ] 排查 Android 插件独立 Gradle 构建缺少 Flutter classpath 的问题  
+- [x] 排查 Android 插件独立 Gradle 构建缺少 Flutter classpath 的问题  
   位置：`android/build.gradle`、`android/src/main/kotlin/com/maomishen/audio_tone/*`  
   说明：当前从插件根目录执行 `android/./gradlew test` 时，Kotlin 编译阶段无法解析 `io.flutter.*`。这会阻塞 Android 原生单测的独立验证。
 
@@ -70,3 +70,4 @@
 - [x] 修复 Android 原生单测模板残留问题
 - [x] 同步 podspec、README/README_CN、平台版本说明和枚举注释
 - [x] 修复根包测试 mock 与平台接口不一致的问题
+- [x] 修复 Android 插件独立 Gradle 测试缺少 Flutter classpath 的问题

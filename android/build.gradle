@@ -1,6 +1,21 @@
 group = "com.maomishen.audio_tone"
 version = "1.0-SNAPSHOT"
 
+def flutterSdkPath = new File(rootProject.projectDir.parentFile, ".fvm/flutter_sdk")
+def flutterJarCandidates = [
+    new File(flutterSdkPath, "bin/cache/artifacts/engine/android-arm64/flutter.jar"),
+    new File(flutterSdkPath, "bin/cache/artifacts/engine/android-arm/flutter.jar"),
+    new File(flutterSdkPath, "bin/cache/artifacts/engine/android-x64/flutter.jar"),
+    new File(flutterSdkPath, "bin/cache/artifacts/engine/android-x86/flutter.jar"),
+]
+def flutterJar = flutterJarCandidates.find { it.exists() }
+
+if (flutterJar == null) {
+    throw new GradleException(
+        "Flutter Android artifacts not found under ${flutterSdkPath}. Run `fvm flutter precache --android` first."
+    )
+}
+
 buildscript {
     ext.kotlin_version = "2.1.0"
     repositories {
@@ -63,4 +78,9 @@ android {
             }
         }
     }
+}
+
+dependencies {
+    compileOnly files(flutterJar)
+    testImplementation files(flutterJar)
 }
