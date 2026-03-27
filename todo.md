@@ -36,9 +36,9 @@
   位置：`ios/Classes/AudioTonePlugin.swift:19-24`、`ios/Classes/AudioTonePlayer.swift:99-120`、`ios/Classes/AudioTonePlayer.swift:288-309`  
   说明：当前 `init` 会重建 `AudioTonePlayer`，`stopMorseCode()` 会停止并 reset `audioEngine`，同时反复激活/取消激活 `AVAudioSession`。建议改成按需初始化并在日常停止时保留 engine/session 热状态，只在真正销毁时释放，减少首音延迟和系统音频资源抖动。
 
-- [ ] 精简 `playStream` 热路径中的主线程调度和日志输出  
-  位置：`ios/Classes/AudioTonePlayer.swift:365-415`、`ios/Classes/AudioTonePlugin.swift:80-107`  
-  说明：当前每个 light/dark 事件都会 `print`，并通过 `DispatchQueue.main.asyncAfter` 逐段递归调度；`onListen` / `onCancel` 也有无条件日志。建议移除热路径日志，改用串行后台队列或定时器驱动事件推进，只在必要时切回主线程派发事件。
+- [x] 精简 `playStream` 热路径中的主线程调度和日志输出  
+  位置：`ios/Classes/AudioTonePlayer.swift:339-463`、`ios/Classes/AudioTonePlugin.swift:75-91`  
+  说明：已移除 `playStream` 热路径和 `onListen` / `onCancel` 的无条件日志，引入串行 `streamEventQueue` 与 `streamPlaybackSessionId` 管理事件推进和取消；事件节奏调度不再依赖主线程，只在最终派发 `eventSink` 时回到主线程。
 
 - [ ] 避免参数更新时重复向 `tapPlayerNode` 安排循环缓冲  
   位置：`ios/Classes/AudioTonePlayer.swift:87-95`  
@@ -54,7 +54,7 @@
 - 当前代码状态：
   - Android 播放路径已从“频繁创建对象和阻塞停止”调整为“缓存复用、后台收尾、低频写入”。
   - `todo.md` 中原定的 Android 性能优化项已全部完成。
-  - iOS 侧已完成“停止路径去阻塞”和“buffer 缓存复用”两项，剩余优化主要集中在 `AVAudioEngine`/`AVAudioSession` 生命周期复用、`playStream` 热路径瘦身，以及 tap 循环缓冲的重复排程控制。
+  - iOS 侧已完成“停止路径去阻塞”“buffer 缓存复用”“playStream 热路径瘦身”三项，剩余优化主要集中在 `AVAudioEngine`/`AVAudioSession` 生命周期复用，以及 tap 循环缓冲的重复排程控制。
 
 ## 后续观察项
 

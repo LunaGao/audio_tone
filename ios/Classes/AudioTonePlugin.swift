@@ -71,40 +71,17 @@ public class AudioTonePlugin: NSObject, FlutterStreamHandler, FlutterPlugin {
       result(FlutterMethodNotImplemented)
     }
   }
-
-  var eventSink: FlutterEventSink?
-  // Handle events on the main thread.
-  var timer = Timer()
-  var morseCode: String?
-
   public func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
-    // self.eventSink = events
-    // return nil
-    print("onListen......")
-    self.eventSink = events
-
     let returnValue = audioTonePlayer?.playMorseCodeWithoutAudio(for: arguments! as? String ?? "", eventSink :events)
     if(returnValue == 0) {
       return nil
     } else {
       return FlutterError(code: "\(returnValue, default: "11")", message: nil, details: nil)
     }
-
-//      self.timer.invalidate()
-//      self.timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { _ in
-//          let dateFormat = DateFormatter()
-//          dateFormat.dateFormat = "HH:mm:ss"
-//          let time = dateFormat.string(from: Date())
-//          print(time)
-//          events(time + (arguments! as? String ?? "not-found"))
-//      })
-//      
-//    return nil
   }
 
   public func onCancel(withArguments arguments: Any?) -> FlutterError? {
-    print("onCancel......")
-    eventSink = nil
+    audioTonePlayer?.cancelStreamPlayback()
     return nil
   }
 }

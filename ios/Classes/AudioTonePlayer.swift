@@ -40,6 +40,8 @@ class AudioTonePlayer: NSObject {
     private var pendingTapStopWorkItem: DispatchWorkItem?
     private var toneBufferCache: [ToneBufferKey: AVAudioPCMBuffer] = [:]
     private var silenceBufferCache: [AVAudioFrameCount: AVAudioPCMBuffer] = [:]
+    private let streamEventQueue = DispatchQueue(label: "com.maomishen.audio_tone.stream-events")
+    private var streamPlaybackSessionId: UInt64 = 0
     
     // MARK: - 音频基础设置
 
@@ -337,6 +339,16 @@ class AudioTonePlayer: NSObject {
     }
     
     // MARK: - 播放时间，仅按时间触发
+
+    func cancelStreamPlayback() {
+        streamPlaybackSessionId += 1
+    }
+
+    private func emitStreamEvent(_ event: Any, eventSink events: @escaping FlutterEventSink) {
+        DispatchQueue.main.async {
+            events(event)
+        }
+    }
     
     // 播放摩斯码，只接受".", "-", " "，这三种数据。
     func playMorseCodeWithoutAudio(for morseCode: String, eventSink events: @escaping FlutterEventSink) -> Int {
@@ -352,28 +364,49 @@ class AudioTonePlayer: NSObject {
         }
         
         let symbols = preprocessMorseCode(morseCode) + "i"
+        let playbackSessionId = streamPlaybackSessionId + 1
+        streamPlaybackSessionId = playbackSessionId
         
         // 播放处理后的序列内容
-        playSymbolsTime(symbols, index: 0, eventSink: events)
+        streamEventQueue.async { [weak self] in
+            self?.playSymbolsTime(
+                symbols,
+                eventSink: events,
+                playbackSessionId: playbackSessionId
+            )
+        }
         return 0
     }
     
     // 递归播放符号序列
-    private func playSymbolsTime(_ symbols: String, index: Int, eventSink events: @escaping FlutterEventSink) {
+    private func playSymbolsTime(
+        _ symbols: String,
+        eventSink events: @escaping FlutterEventSink,
+        playbackSessionId: UInt64
+    ) {
         // 播放当前符号的所有点和划
-        playSymbolCharactersTime(Array(symbols), index: 0, eventSink: events) { [weak self] in
-//            self?.stopMorseCode()
-//            self?.playTimeFinishedNotify() // 播放结束后，需要停止这次的订阅
-            // print("play finished")
-        }
+        playSymbolCharactersTime(
+            Array(symbols),
+            index: 0,
+            eventSink: events,
+            playbackSessionId: playbackSessionId
+        ) {}
     }
     
     // 递归播放单个符号的点和划
-    private func playSymbolCharactersTime(_ characters: [Character], index: Int, eventSink events: @escaping FlutterEventSink, completion: @escaping () -> Void) {
-        
-        
+    private func playSymbolCharactersTime(
+        _ characters: [Character],
+        index: Int,
+        eventSink events: @escaping FlutterEventSink,
+        playbackSessionId: UInt64,
+        completion: @escaping () -> Void
+    ) {
+        guard index < characters.count, playbackSessionId == streamPlaybackSessionId else {
+            completion()
+            return
+        }
+
         let char = characters[index]
-        let isLast = index == characters.count - 1
 
         var duration = Double(0);
         if char == "." {
@@ -395,30 +428,40 @@ class AudioTonePlayer: NSObject {
         
         // 确定是点划，播放声音
         if (char == ".") || (char == "-") {
-            events("light")
-            print("light")
+            emitStreamEvent("light", eventSink: events)
 
             guard index < characters.count - 1 else {
-                events(FlutterEndOfEventStream)
+                emitStreamEvent(FlutterEndOfEventStream, eventSink: events)
                 completion()
                 return
             }
             // 播放一个点或划
-            DispatchQueue.main.asyncAfter(deadline: .now() + duration * lightFlashingMagnificationFactor) {
-                self.playSymbolCharactersTime(characters, index: index + 1, eventSink: events, completion: completion)
+            streamEventQueue.asyncAfter(deadline: .now() + duration * lightFlashingMagnificationFactor) {
+                self.playSymbolCharactersTime(
+                    characters,
+                    index: index + 1,
+                    eventSink: events,
+                    playbackSessionId: playbackSessionId,
+                    completion: completion
+                )
             }
         } else {
-            events("dark")
-            print("dark")
+            emitStreamEvent("dark", eventSink: events)
 
             guard index < characters.count - 1 else {
-                events(FlutterEndOfEventStream)
+                emitStreamEvent(FlutterEndOfEventStream, eventSink: events)
                 completion()
                 return
             }
             // 其他则静音
-            DispatchQueue.main.asyncAfter(deadline: .now() + duration * lightFlashingMagnificationFactor) {
-                self.playSymbolCharactersTime(characters, index: index + 1, eventSink: events, completion: completion)
+            streamEventQueue.asyncAfter(deadline: .now() + duration * lightFlashingMagnificationFactor) {
+                self.playSymbolCharactersTime(
+                    characters,
+                    index: index + 1,
+                    eventSink: events,
+                    playbackSessionId: playbackSessionId,
+                    completion: completion
+                )
             }
         }
     }
