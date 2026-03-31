@@ -141,7 +141,8 @@ class DemoLiveControlsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return DemoSectionCard(
       title: 'Live Controls',
-      subtitle: 'All controls below update the current plugin instance immediately.',
+      subtitle:
+          'All controls below update the current plugin instance immediately.',
       child: Column(
         children: [
           DropdownButtonFormField<AudioSampleRate>(
@@ -219,6 +220,40 @@ class DemoLiveControlsSection extends StatelessWidget {
   }
 }
 
+class DemoTimingsSection extends StatelessWidget {
+  const DemoTimingsSection({
+    required this.timingsLabel,
+    required this.onPlayTimings,
+    super.key,
+  });
+
+  final String timingsLabel;
+  final Future<void> Function() onPlayTimings;
+
+  @override
+  Widget build(BuildContext context) {
+    return DemoSectionCard(
+      title: 'Timing Sequence',
+      subtitle:
+          'Play a raw tone/silence timing list without Morse parsing. This demo maps the current controls to the pattern for "A" (.-).',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Current timings: [$timingsLabel] ms'),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: onPlayTimings,
+              child: const Text('Play Timings'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class DemoHoldToneSection extends StatelessWidget {
   const DemoHoldToneSection({
     required this.isHoldingTone,
@@ -284,10 +319,7 @@ class DemoHoldToneSection extends StatelessWidget {
 }
 
 class DemoStreamEventsSection extends StatelessWidget {
-  const DemoStreamEventsSection({
-    required this.events,
-    super.key,
-  });
+  const DemoStreamEventsSection({required this.events, super.key});
 
   final List<String> events;
 

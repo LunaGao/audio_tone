@@ -95,6 +95,12 @@ class MethodChannelAudioTone extends AudioTonePlatform {
   }
 
   @override
+  Future<int> playTimings(List<int> timings) async {
+    var result = await methodChannel.invokeMethod<int>('playTimings', timings);
+    return result ?? -1;
+  }
+
+  @override
   Future<double> getMorseCodePlayDuration(String morseCode) async {
     var result = await methodChannel.invokeMethod<double>(
       'getMorseCodePlayDuration',

@@ -217,6 +217,12 @@ class AudioTone {
     await AudioTonePlatform.instance.playMorseCode(morseCode);
   }
 
+  /// 按毫秒时序播放音调序列
+  /// [timings] 毫秒数组，偶数索引发音，奇数索引静音
+  Future<int> playTimings(List<int> timings) async {
+    return await AudioTonePlatform.instance.playTimings(timings);
+  }
+
   /// 播放流
   /// Play Stream
   ///

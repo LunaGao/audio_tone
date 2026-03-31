@@ -1,5 +1,12 @@
 ## Unreleased
 
+## 0.0.9
+
+* Add `playTimings(List<int>)` to play raw tone/silence timing sequences on Android and iOS.
+* Allow `stop()` to stop sequence playback in addition to the hold-to-play tone path.
+* Add Dart tests for the new method-channel API.
+* Document the new API in `README.md` and `README_CN.md`.
+
 ## 0.0.8
 
 * Fix Android plugin Gradle Flutter classpath fallback so standalone `android/` builds work without breaking host app integration.

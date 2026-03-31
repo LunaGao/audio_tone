@@ -10,64 +10,72 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 class MockAudioTonePlatform
     with MockPlatformInterfaceMixin
     implements AudioTonePlatform {
+  List<int>? lastTimings;
+
   @override
   Future<void> init(AudioSampleRate sampleRate) {
-    throw UnimplementedError();
+    return Future<void>.value();
   }
 
   @override
   Future<void> play() {
-    throw UnimplementedError();
+    return Future<void>.value();
   }
 
   @override
   Future<int> playMorseCode(String morseCode) {
-    throw UnimplementedError();
+    return Future<int>.value(0);
+  }
+
+  @override
+  Future<int> playTimings(List<int> timings) {
+    lastTimings = List<int>.from(timings);
+    return Future<int>.value(0);
   }
 
   @override
   Future<void> setDashDuration(int dotsTimes) {
-    throw UnimplementedError();
+    return Future<void>.value();
   }
 
   @override
   Future<void> setDotDashIntervalDuration(int dotsTimes) {
-    throw UnimplementedError();
+    return Future<void>.value();
   }
 
   @override
   Future<void> setLightFlashingMagnificationFactor(double factor) {
-    throw UnimplementedError();
+    return Future<void>.value();
   }
 
   @override
   Future<void> setFrequency(AudioFrequency frequency) {
-    throw UnimplementedError();
+    return Future<void>.value();
   }
 
   @override
   Future<void> setLetterIntervalDuration(int dotsTimes) {
-    throw UnimplementedError();
+    return Future<void>.value();
   }
 
   @override
   Future<void> setSpeed(int wpm) {
-    throw UnimplementedError();
+    return Future<void>.value();
   }
 
   @override
   Future<void> setVolume(double volume) {
-    throw UnimplementedError();
+    return Future<void>.value();
   }
 
   @override
   Future<void> setWordsIntervalDuration(int dotsTimes) {
-    throw UnimplementedError();
+    return Future<void>.value();
   }
 
   @override
   Future<void> stop() {
-    throw UnimplementedError();
+    return Future<void>.value();
   }
 
   @override
@@ -77,7 +85,7 @@ class MockAudioTonePlatform
 
   @override
   Future<double> getMorseCodePlayDuration(String morseCode) {
-    throw UnimplementedError();
+    return Future<double>.value(0.48);
   }
 }
 
@@ -85,6 +93,10 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   final AudioTonePlatform initialPlatform = AudioTonePlatform.instance;
+
+  tearDown(() {
+    AudioTonePlatform.instance = initialPlatform;
+  });
 
   test('$MethodChannelAudioTone is the default instance', () {
     expect(initialPlatform, isInstanceOf<MethodChannelAudioTone>());
@@ -105,14 +117,20 @@ void main() {
   //   );
   // });
 
-  test('getMorseCodePlayDuration should return correct duration', () async {
-    AudioTone audioTonePlugin = AudioTone(wpm: 20);
+  test('getMorseCodePlayDuration delegates to platform', () async {
     MockAudioTonePlatform fakePlatform = MockAudioTonePlatform();
     AudioTonePlatform.instance = fakePlatform;
+    AudioTone audioTonePlugin = AudioTone(wpm: 20);
 
-    // 测试简单的摩斯电码
-    expect(() async {
-      await audioTonePlugin.getMorseCodePlayDuration('.-.-');
-    }, throwsA(isA<UnimplementedError>()));
+    expect(await audioTonePlugin.getMorseCodePlayDuration('.-.-'), 0.48);
+  });
+
+  test('playTimings delegates to platform', () async {
+    MockAudioTonePlatform fakePlatform = MockAudioTonePlatform();
+    AudioTonePlatform.instance = fakePlatform;
+    AudioTone audioTonePlugin = AudioTone(wpm: 20);
+
+    expect(await audioTonePlugin.playTimings(const [120, 120, 360]), 0);
+    expect(fakePlatform.lastTimings, const [120, 120, 360]);
   });
 }

@@ -24,7 +24,7 @@
 
 ```yaml
 dependencies:
-  audio_tone: ^0.0.8
+  audio_tone: ^0.0.9
 ```
 
 然后运行：
@@ -66,6 +66,15 @@ print("播放时长: $duration 秒");
 // "-" - 划（长音）
 // " " - 字母间隔（单个空格）
 // "  " - 单词间隔（两个空格）
+```
+
+### 原始时序播放
+
+```dart
+// 以毫秒数组播放音调/静音序列
+// 偶数索引发音，奇数索引静音
+final result = await audioTone.playTimings([120, 120, 360]);
+print('playTimings 结果: $result');
 ```
 
 ### 高级配置
@@ -120,10 +129,11 @@ audioTone.setLightFlashingMagnificationFactor(8.0);
 - `setVolume(double volume)` - 设置音量 (0.0-1.0)
 - `setLightFlashingMagnificationFactor(double factor)` - 设置灯光闪烁倍数 (1.0-100.0)
 - `playMorseCode(String morseCode)` - 播放摩斯电码字符串
+- `playTimings(List<int> timings)` - 按毫秒播放原始发音/静音时序
 - `playStream(String morseCode)` - 以流的方式接收摩斯电码播放事件
 - `getMorseCodePlayDuration(String morseCode)` - 获取摩斯电码播放时长（秒）
 - `play()` - 开始音调播放
-- `stop()` - 停止音调播放
+- `stop()` - 停止当前音调或序列播放
 
 ### AudioFrequency枚举
 

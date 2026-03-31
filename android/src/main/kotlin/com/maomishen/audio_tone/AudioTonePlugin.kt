@@ -96,6 +96,14 @@ class AudioTonePlugin :
                 result.success(resultCode)
             }
 
+            "playTimings" -> {
+                val timings = (call.arguments as? List<*>)
+                    ?.mapNotNull { (it as? Number)?.toLong() }
+                    ?: emptyList()
+                val resultCode = audioPlayer?.playTimings(timings) ?: -1
+                result.success(resultCode)
+            }
+
             "stopMorseCode" -> {
                 audioPlayer?.stopMorseCode()
                 result.success(0)
@@ -107,7 +115,7 @@ class AudioTonePlugin :
             }
             
             "stop" -> {
-                audioPlayer?.playStop()
+                audioPlayer?.stopPlayback()
                 result.success(0)
             }
             "getMorseCodePlayDuration" -> {

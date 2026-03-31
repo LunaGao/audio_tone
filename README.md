@@ -25,7 +25,7 @@ Add dependency to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  audio_tone: ^0.0.8
+  audio_tone: ^0.0.9
 ```
 
 Then run:
@@ -67,6 +67,15 @@ print("Playback duration: $duration seconds");
 // "-" - Dash (long sound)
 // " " - Letter spacing (single space)
 // "  " - Word spacing (double spaces)
+```
+
+### Raw Timing Playback
+
+```dart
+// Play a tone/silence/tone sequence in milliseconds.
+// Even indexes are tone-on, odd indexes are tone-off.
+final result = await audioTone.playTimings([120, 120, 360]);
+print('playTimings result: $result');
 ```
 
 ### Advanced Configuration
@@ -121,10 +130,11 @@ audioTone.setLightFlashingMagnificationFactor(8.0);
 - `setVolume(double volume)` - Set volume (0.0-1.0)
 - `setLightFlashingMagnificationFactor(double factor)` - Set light flashing factor (1.0-100.0)
 - `playMorseCode(String morseCode)` - Play Morse code string
+- `playTimings(List<int> timings)` - Play raw tone/silence timing segments in milliseconds
 - `playStream(String morseCode)` - Stream Morse code playback events
 - `getMorseCodePlayDuration(String morseCode)` - Get Morse code playback duration in seconds
 - `play()` - Start tone playback
-- `stop()` - Stop tone playback
+- `stop()` - Stop the current tone or sequence playback
 
 ### AudioFrequency Enum
 

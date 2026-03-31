@@ -71,6 +71,17 @@ class _DemoPageState extends State<DemoPage> {
       ? '--'
       : '${_lastDurationSeconds!.toStringAsFixed(2)} s';
 
+  List<int> get _aTimings {
+    final dotMs = (((60 / _wpm) / 50) * 1000).round();
+    return <int>[
+      dotMs,
+      dotMs * _dotDashIntervalDuration,
+      dotMs * _dashDuration,
+    ];
+  }
+
+  String get _aTimingsLabel => _aTimings.join(', ');
+
   Future<void> _refreshDuration() async {
     final morse = _morseController.text.trim();
     if (morse.isEmpty) {
@@ -221,6 +232,46 @@ class _DemoPageState extends State<DemoPage> {
       });
   }
 
+  Future<void> _playTimings() async {
+    final timings = _aTimings;
+    await _streamSubscription?.cancel();
+    setState(() {
+      _isStreaming = false;
+      _isPlayingMorse = true;
+      _status = 'Playing timing sequence...';
+    });
+
+    try {
+      final result = await _audioTone.playTimings(timings);
+      if (!mounted) {
+        return;
+      }
+      if (result != 0) {
+        setState(() {
+          _status = 'playTimings failed: $result';
+        });
+        return;
+      }
+      _pushEvent('Timing sequence started: [$timings]');
+      setState(() {
+        _status = 'Timing sequence started';
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _status = 'playTimings failed: $error';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPlayingMorse = false;
+        });
+      }
+    }
+  }
+
   Future<void> _stopAll() async {
     await _streamSubscription?.cancel();
     _streamSubscription = null;
@@ -303,10 +354,7 @@ class _DemoPageState extends State<DemoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Audio Tone Demo'),
-        centerTitle: false,
-      ),
+      appBar: AppBar(title: const Text('Audio Tone Demo'), centerTitle: false),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -337,6 +385,11 @@ class _DemoPageState extends State<DemoPage> {
               onWpmChanged: _updateWpm,
               onVolumeChanged: _updateVolume,
               onLightFactorChanged: _updateLightFactor,
+            ),
+            const SizedBox(height: 16),
+            DemoTimingsSection(
+              timingsLabel: _aTimingsLabel,
+              onPlayTimings: _playTimings,
             ),
             const SizedBox(height: 16),
             DemoHoldToneSection(

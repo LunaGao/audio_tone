@@ -60,11 +60,14 @@ public class AudioTonePlugin: NSObject, FlutterStreamHandler, FlutterPlugin {
     case "playMorseCode":
       let morseCode = call.arguments as! String
       result(audioTonePlayer?.playMorseCode(for: morseCode))
+    case "playTimings":
+      let timings = (call.arguments as? [NSNumber])?.map(\.intValue) ?? []
+      result(audioTonePlayer?.playTimings(timings) ?? -1)
     case "play":
       audioTonePlayer?.playNow()
       result(nil)
     case "stop":
-      audioTonePlayer?.playStop()
+      audioTonePlayer?.stopPlayback()
       result(nil)
     case "getMorseCodePlayDuration":
       let morseCode = call.arguments as! String

@@ -35,6 +35,7 @@ class AudioTonePlayer: NSObject {
     private let tapPlayerNode = AVAudioPlayerNode()
     private var audioFormat: AVAudioFormat?
     private var isPlaying = false
+    private var sequencePlaybackSessionId: UInt64 = 0
     private var isTapPlaying = false // 专门跟踪 tapPlayerNode 的播放状态
     private var tapPlaybackSessionId: UInt64 = 0
     private var pendingTapStopWorkItem: DispatchWorkItem?
@@ -218,9 +219,51 @@ class AudioTonePlayer: NSObject {
             isPlaying = false
             return 10
         }
+
+        let playbackSessionId = sequencePlaybackSessionId &+ 1
+        sequencePlaybackSessionId = playbackSessionId
+        prepareSequencePlayback()
         
         // 播放处理后的序列内容
-        playSymbols(symbols, index: 0)
+        playSymbols(symbols, playbackSessionId: playbackSessionId)
+        return 0
+    }
+
+    func playTimings(_ timings: [Int]) -> Int {
+        guard !isPlaying else {
+            return 1
+        }
+
+        if isTapPlaying {
+            stopTapPlayback(playbackSessionId: nil)
+        }
+
+        guard !timings.isEmpty else {
+            return 2
+        }
+
+        guard timings.allSatisfy({ $0 >= 0 }) else {
+            return 3
+        }
+
+        isPlaying = true
+        do {
+            try ensureAudioEngineRunning()
+        } catch {
+            isPlaying = false
+            return 10
+        }
+
+        let playbackSessionId = sequencePlaybackSessionId &+ 1
+        sequencePlaybackSessionId = playbackSessionId
+        prepareSequencePlayback()
+        playTimingSegments(
+            timings,
+            index: 0,
+            playbackSessionId: playbackSessionId
+        ) { [weak self] in
+            self?.playFinishedNotify(playbackSessionId: playbackSessionId)
+        }
         return 0
     }
 
@@ -258,18 +301,28 @@ class AudioTonePlayer: NSObject {
     // MARK: - 播放声音
     
     // 递归播放符号序列
-    private func playSymbols(_ symbols: String, index: Int) {
+    private func playSymbols(_ symbols: String, playbackSessionId: UInt64) {
         // 播放当前符号的所有点和划
-        playSymbolCharacters(Array(symbols), index: 0) { [weak self] in
-//            self?.stopMorseCode()
-            self?.playFinishedNotify()
+        playSymbolCharacters(
+            Array(symbols),
+            index: 0,
+            playbackSessionId: playbackSessionId
+        ) { [weak self] in
+            self?.playFinishedNotify(playbackSessionId: playbackSessionId)
             // print("play finished")
         }
     }
     
     // 递归播放单个符号的点和划
-    private func playSymbolCharacters(_ characters: [Character], index: Int, completion: @escaping () -> Void) {
-        guard index < characters.count, isPlaying else {
+    private func playSymbolCharacters(
+        _ characters: [Character],
+        index: Int,
+        playbackSessionId: UInt64,
+        completion: @escaping () -> Void
+    ) {
+        guard index < characters.count,
+              isPlaying,
+              playbackSessionId == sequencePlaybackSessionId else {
             completion()
             return
         }
@@ -299,34 +352,95 @@ class AudioTonePlayer: NSObject {
         if (char == ".") || (char == "-") {
             // 播放一个点或划
             let tone = generateTone(duration: duration)
-            playerNode.scheduleBuffer(tone) {
-                self.playSymbolCharacters(characters, index: index + 1, completion: completion)
+            playerNode.scheduleBuffer(tone) { [weak self] in
+                self?.playSymbolCharacters(
+                    characters,
+                    index: index + 1,
+                    playbackSessionId: playbackSessionId,
+                    completion: completion
+                )
             }
         } else {
             // 其他则静音
             let silence = generateSilence(duration: duration)
-            playerNode.scheduleBuffer(silence) {
-                self.playSymbolCharacters(characters, index: index + 1, completion: completion)
+            playerNode.scheduleBuffer(silence) { [weak self] in
+                self?.playSymbolCharacters(
+                    characters,
+                    index: index + 1,
+                    playbackSessionId: playbackSessionId,
+                    completion: completion
+                )
             }
         }
 
-        // 如果是第一个字符，需要启动播放
-        if index == 0 {
-            // print("开始播放节点")
+        if !playerNode.isPlaying {
+            playerNode.play()
+        }
+    }
+
+    private func playTimingSegments(
+        _ timings: [Int],
+        index: Int,
+        playbackSessionId: UInt64,
+        completion: @escaping () -> Void
+    ) {
+        guard index < timings.count,
+              isPlaying,
+              playbackSessionId == sequencePlaybackSessionId else {
+            completion()
+            return
+        }
+
+        let timing = timings[index]
+        if timing == 0 {
+            playTimingSegments(
+                timings,
+                index: index + 1,
+                playbackSessionId: playbackSessionId,
+                completion: completion
+            )
+            return
+        }
+
+        let frameCount = AVAudioFrameCount((Double(timing) / 1000.0) * sampleRate)
+        let buffer = index.isMultiple(of: 2)
+            ? makeToneBuffer(frameCount: frameCount)
+            : makeSilenceBuffer(frameCount: frameCount)
+
+        playerNode.scheduleBuffer(buffer) { [weak self] in
+            self?.playTimingSegments(
+                timings,
+                index: index + 1,
+                playbackSessionId: playbackSessionId,
+                completion: completion
+            )
+        }
+
+        if !playerNode.isPlaying {
             playerNode.play()
         }
     }
     
     // 停止播放
     func stopMorseCode() {
+        stopPlayback()
+    }
+
+    func stopPlayback() {
+        stopSequencePlayback()
+        stopTapPlayback(playbackSessionId: nil)
+    }
+
+    private func stopSequencePlayback() {
+        sequencePlaybackSessionId &+= 1
         isPlaying = false
         cancelStreamPlayback()
-        stopTapPlayback(playbackSessionId: nil)
         
         if playerNode.isPlaying {
             playerNode.stop()
         }
         playerNode.reset()
+        deactivateAudioSessionIfIdle()
     }
 
     // 打印当前时间（精确到纳秒）
@@ -337,8 +451,17 @@ class AudioTonePlayer: NSObject {
     }
     
     // 播放完成通知
-    func playFinishedNotify() {
+    func playFinishedNotify(playbackSessionId: UInt64) {
+        guard playbackSessionId == sequencePlaybackSessionId else {
+            return
+        }
+
         self.isPlaying = false
+        if playerNode.isPlaying {
+            playerNode.stop()
+        }
+        playerNode.reset()
+        deactivateAudioSessionIfIdle()
     }
     
     // 检查音频是否真的在播放
@@ -488,6 +611,19 @@ class AudioTonePlayer: NSObject {
         }
     }
 
+    private func prepareSequencePlayback() {
+        if playerNode.isPlaying {
+            playerNode.stop()
+        }
+        playerNode.reset()
+    }
+
+    private func deactivateAudioSessionIfIdle() {
+        if !isPlaying && !isTapPlaying {
+            deactivateAudioSession()
+        }
+    }
+
     private func ensureTapToneScheduled() {
         guard tapToneNeedsScheduling else {
             return
@@ -523,6 +659,7 @@ class AudioTonePlayer: NSObject {
 
         isTapPlaying = false
         playStartTime = 0
+        deactivateAudioSessionIfIdle()
     }
 
     // 播放
@@ -582,13 +719,8 @@ class AudioTonePlayer: NSObject {
 
     func cleanup() {
         cancelStreamPlayback()
-        isPlaying = false
+        stopSequencePlayback()
         stopTapPlayback(playbackSessionId: nil)
-
-        if playerNode.isPlaying {
-            playerNode.stop()
-        }
-        playerNode.reset()
 
         tapPlayerNode.stop()
         tapPlayerNode.reset()
@@ -666,7 +798,10 @@ class AudioTonePlayer: NSObject {
     // MARK: - 生成正弦波音频数据
     // 生成正弦波音频数据
     private func generateTone(duration: Double) -> AVAudioPCMBuffer {
-        let frameCount = AVAudioFrameCount(duration * sampleRate)
+        makeToneBuffer(frameCount: AVAudioFrameCount(duration * sampleRate))
+    }
+
+    private func makeToneBuffer(frameCount: AVAudioFrameCount) -> AVAudioPCMBuffer {
         let cacheKey = ToneBufferKey(
             frameCount: frameCount,
             frequency: Int(frequency.rounded())
@@ -696,8 +831,10 @@ class AudioTonePlayer: NSObject {
     // MARK: - 生成静音音频数据
     // 生成静音音频数据
     private func generateSilence(duration: Double) -> AVAudioPCMBuffer {
-        let frameCount = AVAudioFrameCount(duration * sampleRate)
+        makeSilenceBuffer(frameCount: AVAudioFrameCount(duration * sampleRate))
+    }
 
+    private func makeSilenceBuffer(frameCount: AVAudioFrameCount) -> AVAudioPCMBuffer {
         if let cachedBuffer = silenceBufferCache[frameCount] {
             return cachedBuffer
         }

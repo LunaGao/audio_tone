@@ -46,6 +46,8 @@ class AudioTonePlayer(private val sampleRate: Int) {
     private var tapAudioTrack: AudioTrack? = null
     private var isPlaying = false
     @Volatile
+    private var sequencePlaybackSessionId: Long = 0
+    @Volatile
     private var isTapPlaying = false // 专门跟踪 tapPlayerNode 的播放状态
     @Volatile
     private var tapStopRequested = false
@@ -153,8 +155,32 @@ class AudioTonePlayer(private val sampleRate: Int) {
         
         val symbols = preprocessMorseCode(morseCode)
         
+        val playbackSessionId = ++sequencePlaybackSessionId
         isPlaying = true
-        playSymbols(symbols)
+        playSymbols(symbols, playbackSessionId)
+        return 0
+    }
+
+    fun playTimings(timings: List<Long>): Int {
+        if (isPlaying) {
+            return 1
+        }
+
+        if (isTapPlaying) {
+            stopTapPlaying()
+        }
+
+        if (timings.isEmpty()) {
+            return 2
+        }
+
+        if (timings.any { it < 0 }) {
+            return 3
+        }
+
+        val playbackSessionId = ++sequencePlaybackSessionId
+        isPlaying = true
+        playTimingSegments(timings, playbackSessionId)
         return 0
     }
     
@@ -209,23 +235,29 @@ class AudioTonePlayer(private val sampleRate: Int) {
     
     // 停止播放
     fun playStop() {
-        if (!isTapPlaying) {
-            return
-        }
-
-        tapStopRequested = true
-        if (System.currentTimeMillis() - playStartTime >= minimumPlayTime) {
-            isTapPlaying = false
-        }
+        stopPlayback()
     }
     
     // 停止摩斯码播放
     fun stopMorseCode() {
-        isPlaying = false
-        isTapPlaying = false
+        stopPlayback()
+    }
 
-        resetTrack(audioTrack)
+    fun stopPlayback() {
+        stopSequencePlayback()
+        if (isTapPlaying) {
+            tapStopRequested = true
+            if (System.currentTimeMillis() - playStartTime >= minimumPlayTime) {
+                isTapPlaying = false
+            }
+        }
         resetTrack(tapAudioTrack)
+    }
+
+    private fun stopSequencePlayback() {
+        sequencePlaybackSessionId++
+        isPlaying = false
+        resetTrack(audioTrack)
     }
     
     // 停止tap播放
@@ -334,14 +366,14 @@ class AudioTonePlayer(private val sampleRate: Int) {
     }
     
     // 播放符号序列
-    private fun playSymbols(symbols: String) {        
+    private fun playSymbols(symbols: String, playbackSessionId: Long) {
         executor.execute {
             try {
                 ensureAudioTrack()
                 // 先启动播放，然后立即预填充
                 audioTrack?.play()
                 for (char in symbols) {
-                    if (!isPlaying) break
+                    if (!isPlaying || sequencePlaybackSessionId != playbackSessionId) break
                     
                     val duration = when (char) {
                         '.' -> dotDuration
@@ -362,16 +394,49 @@ class AudioTonePlayer(private val sampleRate: Int) {
                         playSilence(duration)
                     }
                 }
-                playSilence(0.5)
-                // println("Stop！")
-                resetTrack(audioTrack)
-                isPlaying = false
+                if (isPlaying && sequencePlaybackSessionId == playbackSessionId) {
+                    playSilence(0.5)
+                }
                 
             } catch (e: Exception) {
                 // println("播放摩斯码错误: ${e.message}")
-                isPlaying = false
+            } finally {
+                finishSequencePlayback(playbackSessionId)
             }
         }
+    }
+
+    private fun playTimingSegments(timings: List<Long>, playbackSessionId: Long) {
+        executor.execute {
+            try {
+                ensureAudioTrack()
+                audioTrack?.play()
+                for ((index, timingMs) in timings.withIndex()) {
+                    if (!isPlaying || sequencePlaybackSessionId != playbackSessionId) break
+                    if (timingMs <= 0) continue
+
+                    val duration = timingMs.toDouble() / 1000.0
+                    if (index % 2 == 0) {
+                        playTone(duration)
+                    } else {
+                        playSilence(duration)
+                    }
+                }
+            } catch (e: Exception) {
+                // println("播放 timings 错误: ${e.message}")
+            } finally {
+                finishSequencePlayback(playbackSessionId)
+            }
+        }
+    }
+
+    private fun finishSequencePlayback(playbackSessionId: Long) {
+        if (sequencePlaybackSessionId != playbackSessionId) {
+            return
+        }
+
+        isPlaying = false
+        resetTrack(audioTrack)
     }
     
     // 播放音调
