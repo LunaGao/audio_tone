@@ -10,6 +10,8 @@
 
 A professional Flutter plugin for audio tone generation and Morse code playback. This plugin provides comprehensive audio control features including frequency modulation, speed adjustment, and precise Morse code communication timing control.
 
+> __Note__: **0.1.0 ** are using for **Flutter 3.44.0 and above** (iOS package is using Swift Package Manager). If you are using Flutter 3.41.9 and below (iOS using Pod), please use 0.9.0 version.
+
 ## Features ✨
 
 - **Audio Tone Generation**: Generate pure audio tones with customizable frequencies
@@ -25,7 +27,7 @@ Add dependency to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  audio_tone: ^0.0.9
+  audio_tone: ^0.1.0
 ```
 
 Then run:

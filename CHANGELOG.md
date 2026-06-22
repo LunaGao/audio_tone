@@ -1,4 +1,6 @@
-## Unreleased
+## 0.1.0
+
+* upgrade flutter version to 3.44.2, use Swift Package Manager to instead Pod.
 
 ## 0.0.9
 
