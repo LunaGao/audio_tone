@@ -457,10 +457,6 @@ class AudioTonePlayer: NSObject {
         }
 
         self.isPlaying = false
-        if playerNode.isPlaying {
-            playerNode.stop()
-        }
-        playerNode.reset()
         deactivateAudioSessionIfIdle()
     }
     
