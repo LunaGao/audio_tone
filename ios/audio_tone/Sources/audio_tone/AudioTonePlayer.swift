@@ -446,7 +446,7 @@ class AudioTonePlayer: NSObject {
     // 打印当前时间（精确到纳秒）
     func displayTime(_ title: String) {
         // 打印当前时间（精确到纳秒）
-        let now = CACurrentMediaTime()
+        // let now = CACurrentMediaTime()
         // print("\(title) \(now)")
     }
     
