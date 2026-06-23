@@ -731,6 +731,72 @@ class AudioTonePlayer: NSObject {
         deactivateAudioSession()
     }
 
+    // MARK: - 生成正弦波采样数据并通过 EventChannel 返回
+
+    /// 根据摩斯码生成正弦波+静音采样数据，逐符号通过 EventChannel 推送给 Flutter 端
+    func generateAndEmitToneSoundData(for morseCode: String, eventSink events: @escaping FlutterEventSink) -> Int {
+        guard !morseCode.isEmpty else {
+            return 2
+        }
+        
+        // 检查输入是否只包含有效字符
+        guard morseCode.allSatisfy({ $0 == "." || $0 == "-" || $0 == " " }) else {
+            return 3
+        }
+        
+        let symbols = preprocessMorseCode(morseCode)
+        
+        for char in symbols {
+            var type: String
+            var frameCount: AVAudioFrameCount
+            let data: [Double]
+            
+            if char == "." {
+                type = "dot"
+                frameCount = AVAudioFrameCount(dotDuration * sampleRate)
+            } else if char == "-" {
+                type = "dash"
+                frameCount = AVAudioFrameCount(dashDuration * sampleRate)
+            } else if char == "i" {
+                type = "interval"
+                frameCount = AVAudioFrameCount(dotDashDuration * sampleRate)
+            } else if char == "o" {
+                type = "letter_gap"
+                frameCount = AVAudioFrameCount(oneWhiteSpaceDuration * sampleRate)
+            } else if char == "t" {
+                type = "word_gap"
+                frameCount = AVAudioFrameCount(twoWhiteSpacesDuration * sampleRate)
+            } else {
+                continue
+            }
+            
+            if char == "." || char == "-" {
+                // 正弦波数据
+                var samples = [Double](repeating: 0.0, count: Int(frameCount))
+                for frame in 0..<Int(frameCount) {
+                    let time = Double(frame) / sampleRate
+                    samples[frame] = sin(2 * Double.pi * frequency * time)
+                }
+                data = samples
+            } else {
+                // 静音数据（全零）
+                data = [Double](repeating: 0.0, count: Int(frameCount))
+            }
+            
+            let event: [String: Any] = ["type": type, "data": data]
+            DispatchQueue.main.async {
+                events(event)
+            }
+        }
+        
+        // 发送完成信号
+        DispatchQueue.main.async {
+            events(FlutterEndOfEventStream)
+        }
+        
+        return 0
+    }
+
     // MARK: - 给播放摩斯码增加音频流
 
     // 增加一个点到音频流中，高频

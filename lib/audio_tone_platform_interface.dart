@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:audio_tone/audio_frequency.dart';
 import 'package:audio_tone/audio_sample_rate.dart';
@@ -52,6 +53,17 @@ abstract class AudioTonePlatform extends PlatformInterface {
   Future<void> setLightFlashingMagnificationFactor(double factor) {
     throw UnimplementedError(
       'setLightFlashingMagnificationFactor() has not been implemented.',
+    );
+  }
+
+  /// 根据摩斯码生成完整的正弦波+静音采样数据
+  /// Generate complete sine wave + silence sample data based on Morse code
+  ///
+  /// [morseCode] Morse Code / 摩尔斯电码
+  /// 返回 Float64List，包含所有符号对应的采样数据
+  Future<Float64List> generateToneSoundData(String morseCode) {
+    throw UnimplementedError(
+      'generateToneSoundData() has not been implemented.',
     );
   }
 

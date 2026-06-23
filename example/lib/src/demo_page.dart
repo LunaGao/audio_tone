@@ -34,6 +34,7 @@ class _DemoPageState extends State<DemoPage> {
   bool _isHoldingTone = false;
   bool _isPlayingMorse = false;
   bool _isStreaming = false;
+  bool _isGeneratingToneData = false;
   double? _lastDurationSeconds;
   String _status = 'Ready';
   final List<String> _events = <String>[];
@@ -272,6 +273,51 @@ class _DemoPageState extends State<DemoPage> {
     }
   }
 
+  Future<void> _generateToneData() async {
+    final morse = _morseController.text.trim();
+    if (morse.isEmpty) {
+      setState(() {
+        _status = 'Enter Morse code first';
+      });
+      return;
+    }
+
+    setState(() {
+      _isGeneratingToneData = true;
+      _status = 'Generating tone data...';
+    });
+
+    try {
+      final data = await _audioTone.generateToneSoundData(morse);
+      if (!mounted) return;
+
+      final sampleCount = data.length;
+      final previewList = <String>[];
+      final previewLen = sampleCount > 20 ? 20 : sampleCount;
+      for (var i = 0; i < previewLen; i++) {
+        previewList.add(data[i].toStringAsFixed(3));
+      }
+      final preview = previewList.join(', ');
+      final suffix = sampleCount > 20 ? ', ...' : '';
+
+      _pushEvent('Tone data: $sampleCount samples [$preview$suffix]');
+      setState(() {
+        _status = 'Generated $sampleCount samples';
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _status = 'Generate tone data failed: $error';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGeneratingToneData = false;
+        });
+      }
+    }
+  }
+
   Future<void> _stopAll() async {
     await _streamSubscription?.cancel();
     _streamSubscription = null;
@@ -283,6 +329,7 @@ class _DemoPageState extends State<DemoPage> {
       _isHoldingTone = false;
       _isPlayingMorse = false;
       _isStreaming = false;
+      _isGeneratingToneData = false;
       _status = 'Stopped';
     });
   }
@@ -372,6 +419,7 @@ class _DemoPageState extends State<DemoPage> {
               onChanged: _refreshDuration,
               onPlayMorse: _playMorse,
               onPlayStream: _playStream,
+              onGenerateToneData: _generateToneData,
             ),
             const SizedBox(height: 16),
             DemoLiveControlsSection(

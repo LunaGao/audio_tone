@@ -22,6 +22,7 @@ class AudioTonePlugin :
     // when the Flutter Engine is detached from the Activity
     private lateinit var channel: MethodChannel
     private lateinit var eventChannel: EventChannel
+    private lateinit var toneDataEventChannel: EventChannel
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "audio_tone")
@@ -29,6 +30,9 @@ class AudioTonePlugin :
 
         eventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "audio_tone_event")
         eventChannel.setStreamHandler(this)
+
+        toneDataEventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "audio_tone_tone_data")
+        toneDataEventChannel.setStreamHandler(toneDataStreamHandler)
     }
 
     override fun onMethodCall(
@@ -132,6 +136,7 @@ class AudioTonePlugin :
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
+        toneDataEventChannel.setStreamHandler(null)
         
         // 清理音频播放器资源
         audioPlayer?.cleanup()
@@ -140,6 +145,26 @@ class AudioTonePlugin :
 
     // Declare our eventSink later it will be initialized
     private var eventSink: EventChannel.EventSink? = null
+
+    // Tone data stream handler
+    private val toneDataStreamHandler = object : EventChannel.StreamHandler {
+        override fun onListen(arguments: Any?, sink: EventChannel.EventSink) {
+            try {
+                val morseCode = arguments as? String
+                if (morseCode != null) {
+                    audioPlayer?.generateAndEmitToneSoundData(morseCode, sink)
+                } else {
+                    sink.error("INVALID_ARGUMENTS", "Morse code must be provided", null)
+                }
+            } catch (e: Exception) {
+                sink.error("GENERATION_ERROR", "Failed to generate tone data: ${e.message}", null)
+            }
+        }
+
+        override fun onCancel(arguments: Any?) {
+            // No-op: data generation is a one-shot operation
+        }
+    }
 
     override fun onListen(arguments: Any?, sink: EventChannel.EventSink) {
         eventSink = sink

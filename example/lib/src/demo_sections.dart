@@ -57,6 +57,7 @@ class DemoMorseInputSection extends StatelessWidget {
     required this.onChanged,
     required this.onPlayMorse,
     required this.onPlayStream,
+    required this.onGenerateToneData,
     super.key,
   });
 
@@ -66,6 +67,7 @@ class DemoMorseInputSection extends StatelessWidget {
   final Future<void> Function() onChanged;
   final Future<void> Function() onPlayMorse;
   final Future<void> Function() onPlayStream;
+  final Future<void> Function() onGenerateToneData;
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +106,17 @@ class DemoMorseInputSection extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: isPlayingMorse || isStreaming
+                  ? null
+                  : onGenerateToneData,
+              icon: const Icon(Icons.graphic_eq),
+              label: const Text('Generate Tone Data'),
+            ),
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:audio_tone/audio_frequency.dart';
 import 'package:audio_tone/audio_sample_rate.dart';
@@ -251,5 +252,20 @@ class AudioTone {
   /// 返回播放时长（秒）/ Returns playback duration in seconds
   Future<double> getMorseCodePlayDuration(String morseCode) async {
     return await AudioTonePlatform.instance.getMorseCodePlayDuration(morseCode);
+  }
+
+  /// 根据摩斯码生成完整的正弦波+静音采样数据
+  /// Generate complete sine wave + silence sample data based on Morse code
+  ///
+  /// [morseCode] Morse Code / 摩尔斯电码
+  /// 输入内容限于".", "-", " ", "  " 四种。
+  /// "." 表示点，
+  /// "-" 表示划，
+  /// " "（一个空格） 表示字母间隔，
+  /// "  "（两个空格） 表示单词间隔。
+  ///
+  /// 返回 Float64List，包含所有符号对应的采样数据
+  Future<Float64List> generateToneSoundData(String morseCode) async {
+    return await AudioTonePlatform.instance.generateToneSoundData(morseCode);
   }
 }

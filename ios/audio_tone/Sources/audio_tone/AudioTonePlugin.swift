@@ -5,6 +5,34 @@ public class AudioTonePlugin: NSObject, FlutterStreamHandler, FlutterPlugin {
 
   var audioTonePlayer: AudioTonePlayer?
 
+  /// 用于 tone data 流的 FlutterStreamHandler
+  private class ToneDataStreamHandler: NSObject, FlutterStreamHandler {
+    weak var plugin: AudioTonePlugin?
+
+    init(plugin: AudioTonePlugin) {
+      self.plugin = plugin
+    }
+
+    public func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+      guard let plugin = plugin else {
+        return FlutterError(code: "NO_PLUGIN", message: "Plugin not available", details: nil)
+      }
+      let morseCode = arguments as? String ?? ""
+      let returnValue = plugin.audioTonePlayer?.generateAndEmitToneSoundData(for: morseCode, eventSink: events)
+      if returnValue == 0 {
+        return nil
+      } else {
+        return FlutterError(code: "\(returnValue ?? 11)", message: nil, details: nil)
+      }
+    }
+
+    public func onCancel(withArguments arguments: Any?) -> FlutterError? {
+      return nil
+    }
+  }
+
+  private var toneDataStreamHandler: ToneDataStreamHandler?
+
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "audio_tone", binaryMessenger: registrar.messenger())
     let instance: AudioTonePlugin = AudioTonePlugin()
@@ -12,6 +40,11 @@ public class AudioTonePlugin: NSObject, FlutterStreamHandler, FlutterPlugin {
 
     let streamChannel = FlutterEventChannel(name: "audio_tone_event", binaryMessenger: registrar.messenger())
     streamChannel.setStreamHandler(instance)
+
+    let toneDataStreamChannel = FlutterEventChannel(name: "audio_tone_tone_data", binaryMessenger: registrar.messenger())
+    let toneHandler = ToneDataStreamHandler(plugin: instance)
+    instance.toneDataStreamHandler = toneHandler
+    toneDataStreamChannel.setStreamHandler(toneHandler)
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {

@@ -593,6 +593,83 @@ class AudioTonePlayer(private val sampleRate: Int) {
         }
     }
     
+    // MARK: - 生成正弦波采样数据并通过 EventChannel 返回
+
+    /// 根据摩斯码生成正弦波+静音采样数据，逐符号通过 EventChannel 推送给 Flutter 端
+    fun generateAndEmitToneSoundData(morseCode: String, eventSink: EventChannel.EventSink?) : Int {
+        if (morseCode.isEmpty()) {
+            return 2
+        }
+
+        // 检查输入是否只包含有效字符
+        if (!morseCode.all { it == '.' || it == '-' || it == ' ' }) {
+            return 3
+        }
+
+        val symbols = preprocessMorseCode(morseCode)
+
+        executor.execute {
+            for (char in symbols) {
+                val type: String
+                val duration: Double
+                val data: DoubleArray
+
+                when (char) {
+                    '.' -> {
+                        type = "dot"
+                        duration = dotDuration
+                    }
+                    '-' -> {
+                        type = "dash"
+                        duration = dashDuration
+                    }
+                    'i' -> {
+                        type = "interval"
+                        duration = dotDashDuration
+                    }
+                    'o' -> {
+                        type = "letter_gap"
+                        duration = oneWhiteSpaceDuration
+                    }
+                    't' -> {
+                        type = "word_gap"
+                        duration = twoWhiteSpacesDuration
+                    }
+                    else -> continue
+                }
+
+                val frameCount = (duration * sampleRate).toInt()
+
+                if (char == '.' || char == '-') {
+                    // 正弦波数据
+                    data = DoubleArray(frameCount)
+                    for (i in 0 until frameCount) {
+                        val time = i.toDouble() / sampleRate.toDouble()
+                        data[i] = sin(2 * PI * frequency * time)
+                    }
+                } else {
+                    // 静音数据（全零）
+                    data = DoubleArray(frameCount)
+                }
+
+                val event: Map<String, Any> = mapOf("type" to type, "data" to data)
+                handler.post {
+                    try {
+                        eventSink?.success(event)
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+
+            // 发送完成信号
+            handler.post {
+                eventSink?.endOfStream()
+            }
+        }
+
+        return 0
+    }
+
     // 清理资源
     fun cleanup() {
         stopMorseCode()

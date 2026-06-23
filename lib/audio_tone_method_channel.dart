@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:audio_tone/audio_frequency.dart';
 import 'package:audio_tone/audio_sample_rate.dart';
@@ -15,6 +16,9 @@ class MethodChannelAudioTone extends AudioTonePlatform {
 
   @visibleForTesting
   final eventChannel = const EventChannel('audio_tone_event');
+
+  @visibleForTesting
+  final toneDataEventChannel = const EventChannel('audio_tone_tone_data');
 
   StreamSubscription<dynamic>? _streamSubscription;
 
@@ -135,5 +139,44 @@ class MethodChannelAudioTone extends AudioTonePlatform {
         .receiveBroadcastStream(morseCode)
         .listen(null, cancelOnError: true);
     return _streamSubscription!;
+  }
+
+  /// 根据摩斯码生成完整的正弦波+静音采样数据
+  /// Generate complete sine wave + silence sample data based on Morse code
+  ///
+  /// [morseCode] Morse Code / 摩尔斯电码
+  /// 返回 Float64List，包含所有符号对应的采样数据
+  @override
+  Future<Float64List> generateToneSoundData(String morseCode) async {
+    final Completer<Float64List> completer = Completer<Float64List>();
+    final List<double> allSamples = [];
+
+    final subscription = toneDataEventChannel
+        .receiveBroadcastStream(morseCode)
+        .listen(
+          (dynamic event) {
+            if (event is Map) {
+              final data = event['data'];
+              if (data is List) {
+                allSamples.addAll(data.cast<double>());
+              }
+            }
+          },
+          onError: (dynamic error) {
+            if (!completer.isCompleted) {
+              completer.completeError(error);
+            }
+          },
+          onDone: () {
+            if (!completer.isCompleted) {
+              completer.complete(Float64List.fromList(allSamples));
+            }
+          },
+          cancelOnError: true,
+        );
+
+    final result = await completer.future;
+    await subscription.cancel();
+    return result;
   }
 }

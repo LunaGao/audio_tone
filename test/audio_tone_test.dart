@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:audio_tone/audio_frequency.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -87,6 +88,14 @@ class MockAudioTonePlatform
   Future<double> getMorseCodePlayDuration(String morseCode) {
     return Future<double>.value(0.48);
   }
+
+  @override
+  Future<Float64List> generateToneSoundData(String morseCode) {
+    // 返回一个简单的测试数据
+    return Future<Float64List>.value(
+      Float64List.fromList([0.0, 0.5, 1.0, 0.5, 0.0]),
+    );
+  }
 }
 
 void main() {
@@ -132,5 +141,15 @@ void main() {
 
     expect(await audioTonePlugin.playTimings(const [120, 120, 360]), 0);
     expect(fakePlatform.lastTimings, const [120, 120, 360]);
+  });
+
+  test('generateToneSoundData delegates to platform', () async {
+    MockAudioTonePlatform fakePlatform = MockAudioTonePlatform();
+    AudioTonePlatform.instance = fakePlatform;
+    AudioTone audioTonePlugin = AudioTone(wpm: 20);
+
+    final result = await audioTonePlugin.generateToneSoundData('.- -');
+    expect(result.length, 5);
+    expect(result[2], 1.0);
   });
 }
