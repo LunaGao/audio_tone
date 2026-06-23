@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audio_tone/audio_frequency.dart';
 import 'package:audio_tone/audio_tone.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'demo_sections.dart';
+import 'wav_writer.dart';
 
 class DemoPage extends StatefulWidget {
   const DemoPage({super.key});
@@ -318,6 +322,107 @@ class _DemoPageState extends State<DemoPage> {
     }
   }
 
+  Future<void> _saveWav() async {
+    final morse = _morseController.text.trim();
+    if (morse.isEmpty) {
+      setState(() {
+        _status = 'Enter Morse code first';
+      });
+      return;
+    }
+
+    setState(() {
+      _status = 'Generating and saving WAV file...';
+    });
+
+    try {
+      final data = await _audioTone.generateToneSoundData(morse);
+      if (!mounted) return;
+
+      final wavBytes = WavWriter.encode(
+        samples: data,
+        sampleRate: _sampleRate.value,
+      );
+
+      final directory = await getApplicationDocumentsDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final file = File('${directory.path}/morse_tone_$timestamp.wav');
+      await file.writeAsBytes(wavBytes);
+
+      if (!mounted) return;
+      final sizeKb = (wavBytes.length / 1024).toStringAsFixed(1);
+      _pushEvent(
+        'WAV saved: ${file.path} ($sizeKb KB, ${data.length} samples)',
+      );
+      setState(() {
+        _status = 'WAV saved to ${file.path}';
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _status = 'Save WAV failed: $error';
+      });
+    }
+  }
+
+  Future<void> _shareWav() async {
+    final morse = _morseController.text.trim();
+    if (morse.isEmpty) {
+      setState(() {
+        _status = 'Enter Morse code first';
+      });
+      return;
+    }
+
+    setState(() {
+      _status = 'Generating WAV for sharing...';
+    });
+
+    try {
+      final data = await _audioTone.generateToneSoundData(morse);
+      if (!mounted) return;
+
+      final wavBytes = WavWriter.encode(
+        samples: data,
+        sampleRate: _sampleRate.value,
+      );
+
+      final directory = await getTemporaryDirectory();
+      final file = File('${directory.path}/morse_tone_share.wav');
+      await file.writeAsBytes(wavBytes);
+
+      if (!mounted) return;
+
+      final sizeKb = (wavBytes.length / 1024).toStringAsFixed(1);
+      final params = ShareParams(
+        text: 'Morse Tone Audio',
+        files: [XFile(file.path)],
+      );
+
+      final result = await SharePlus.instance.share(params);
+
+      if (result.status == ShareResultStatus.success) {
+        setState(() {
+          _status = 'WAV shared successfully';
+        });
+        if (!mounted) return;
+        _pushEvent('Shared WAV: $sizeKb KB, ${data.length} samples');
+        setState(() {
+          _status = 'WAV shared successfully';
+        });
+      } else {
+        setState(() {
+          _status = 'WAV shared failed';
+        });
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _status = 'Share WAV failed: $error';
+      });
+    }
+  }
+
   Future<void> _stopAll() async {
     await _streamSubscription?.cancel();
     _streamSubscription = null;
@@ -420,6 +525,8 @@ class _DemoPageState extends State<DemoPage> {
               onPlayMorse: _playMorse,
               onPlayStream: _playStream,
               onGenerateToneData: _generateToneData,
+              onSaveWav: _saveWav,
+              onShareWav: _shareWav,
             ),
             const SizedBox(height: 16),
             DemoLiveControlsSection(

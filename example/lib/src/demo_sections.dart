@@ -58,6 +58,8 @@ class DemoMorseInputSection extends StatelessWidget {
     required this.onPlayMorse,
     required this.onPlayStream,
     required this.onGenerateToneData,
+    required this.onSaveWav,
+    required this.onShareWav,
     super.key,
   });
 
@@ -68,6 +70,8 @@ class DemoMorseInputSection extends StatelessWidget {
   final Future<void> Function() onPlayMorse;
   final Future<void> Function() onPlayStream;
   final Future<void> Function() onGenerateToneData;
+  final Future<void> Function() onSaveWav;
+  final Future<void> Function() onShareWav;
 
   @override
   Widget build(BuildContext context) {
@@ -117,6 +121,26 @@ class DemoMorseInputSection extends StatelessWidget {
               icon: const Icon(Icons.graphic_eq),
               label: const Text('Generate Tone Data'),
             ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: isPlayingMorse || isStreaming ? null : onSaveWav,
+                  icon: const Icon(Icons.save_alt),
+                  label: const Text('Save WAV'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: isPlayingMorse || isStreaming ? null : onShareWav,
+                  icon: const Icon(Icons.share),
+                  label: const Text('Share WAV'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
