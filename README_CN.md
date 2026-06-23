@@ -27,7 +27,7 @@
 
 ```yaml
 dependencies:
-  audio_tone: ^0.1.0
+  audio_tone: ^0.1.1
 ```
 
 然后运行：
@@ -78,6 +78,20 @@ print("播放时长: $duration 秒");
 // 偶数索引发音，奇数索引静音
 final result = await audioTone.playTimings([120, 120, 360]);
 print('playTimings 结果: $result');
+```
+
+### 生成音调采样数据
+
+```dart
+// 根据摩斯码生成正弦波采样数据
+Float64List soundData = await audioTone.generateToneSoundData(".-.-  .-.- .");
+print("采样数据长度: ${soundData.length}");
+
+// 插件支持：
+// "." - 点（短音）
+// "-" - 划（长音）
+// " " - 字母间隔（单个空格）
+// "  " - 单词间隔（两个空格）
 ```
 
 ### 高级配置
@@ -135,6 +149,7 @@ audioTone.setLightFlashingMagnificationFactor(8.0);
 - `playTimings(List<int> timings)` - 按毫秒播放原始发音/静音时序
 - `playStream(String morseCode)` - 以流的方式接收摩斯电码播放事件
 - `getMorseCodePlayDuration(String morseCode)` - 获取摩斯电码播放时长（秒）
+- `generateToneSoundData(String morseCode)` - 根据摩斯码生成正弦波+静音采样数据，返回 `Float64List`
 - `play()` - 开始音调播放
 - `stop()` - 停止当前音调或序列播放
 

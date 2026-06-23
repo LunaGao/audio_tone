@@ -1,3 +1,8 @@
+## 0.1.1
+
+* Add `generateToneSoundData(String morseCode)` to generate sine wave + silence sample data based on Morse code, returning `Float64List` for custom audio processing.
+* Document the new API in `README.md` and `README_CN.md`.
+
 ## 0.1.0
 
 * upgrade flutter version to 3.44.2, use Swift Package Manager to instead Pod.

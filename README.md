@@ -27,7 +27,7 @@ Add dependency to your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  audio_tone: ^0.1.0
+  audio_tone: ^0.1.1
 ```
 
 Then run:
@@ -78,6 +78,20 @@ print("Playback duration: $duration seconds");
 // Even indexes are tone-on, odd indexes are tone-off.
 final result = await audioTone.playTimings([120, 120, 360]);
 print('playTimings result: $result');
+```
+
+### Generate Tone Sound Data
+
+```dart
+// Generate sine wave sample data based on Morse code
+Float64List soundData = await audioTone.generateToneSoundData(".-.-  .-.- .");
+print("Sample data length: ${soundData.length}");
+
+// Plugin supports:
+// "." - Dot (short sound)
+// "-" - Dash (long sound)
+// " " - Letter spacing (single space)
+// "  " - Word spacing (double spaces)
 ```
 
 ### Advanced Configuration
@@ -135,6 +149,7 @@ audioTone.setLightFlashingMagnificationFactor(8.0);
 - `playTimings(List<int> timings)` - Play raw tone/silence timing segments in milliseconds
 - `playStream(String morseCode)` - Stream Morse code playback events
 - `getMorseCodePlayDuration(String morseCode)` - Get Morse code playback duration in seconds
+- `generateToneSoundData(String morseCode)` - Generate sine wave + silence sample data based on Morse code, returns `Float64List`
 - `play()` - Start tone playback
 - `stop()` - Stop the current tone or sequence playback
 
